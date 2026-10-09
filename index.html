@@ -199,7 +199,7 @@ const $$ = s => [...document.querySelectorAll(s)];
 const view = $('#view');
 
 /* ---------- язык / dil ---------- */
-const APP_VER='8';
+const APP_VER='9';
 const LANG_KEY='khinkali.lang';
 let LANG='az';
 try{LANG=localStorage.getItem(LANG_KEY)||'az'}catch(_){}
@@ -316,7 +316,7 @@ const S = {
 const GROUPS=['Тесто','Мясо','Сыр и молочное','Овощи и зелень','Специи','Прочее','Упаковка'];
 const EXP_CATS=['Аренда','Зарплата','Газ, свет, вода','Транспорт и доставка','Упаковка и хозтовары','Оборудование и ремонт','Другое'];
 const WASTE_R=['Брак (порвались, слиплись)','Просрочка','Не продали вовремя','Упало / испортилось','Другое'];
-const UNITS=['кг','л','шт','пучок','уп'];
+const UNITS=['кг','г','л','мл','шт','пучок','уп'];
 
 /* ---------- helpers ---------- */
 const pad=n=>String(n).padStart(2,'0');
@@ -338,12 +338,22 @@ const iUnit=id=>ing(id)?t(ing(id).unit):'';
 const fq=(v,unit)=>{v=+v||0;const a=Math.abs(v);
   if(unit==='кг'&&a>0&&a<1) return nf(v*1000,Math.abs(v*1000)<10?1:0)+' '+t('г');
   if(unit==='л'&&a>0&&a<1) return nf(v*1000,Math.abs(v*1000)<10?1:0)+' '+t('мл');
+  if(unit==='г'&&a>=1000) return qf(v/1000)+' '+t('кг');
+  if(unit==='мл'&&a>=1000) return qf(v/1000)+' '+t('л');
+  if(unit==='г'||unit==='мл') return nf(v,a<10&&Math.abs(v-Math.round(v))>1e-9?1:0)+' '+t(unit);
   return qf(v)+' '+t(unit)};
 const iq=(v,id)=>fq(v,ing(id)?.unit||'');
 // Переключатель кг/г (л/мл) у полей ввода.
-const small=u=>u==='кг'?'г':u==='л'?'мл':null;
+// Альтернативная единица для ввода и множитель перевода в основную единицу продукта.
+const ALT={'кг':['г',0.001],'л':['мл',0.001],'г':['кг',1000],'мл':['л',1000]};
+const small=u=>ALT[u]?ALT[u][0]:null;
 const utBtn=(key,u)=>small(u)?`<button type="button" class="ut" data-ut="${key}" data-u="${u}">${t(S.ut[key]?small(u):u)}</button>`:'';
-const conv=(key,v)=>S.ut[key]?v/1000:v;
+const conv=(key,v,u)=>S.ut[key]&&ALT[u]?v*ALT[u][1]:v;
+// Цена у граммов и миллилитров показывается и вводится за 1 кг / 1 л.
+const PM=u=>(u==='г'||u==='мл')?1000:1;
+const PU=u=>u==='г'?'кг':u==='мл'?'л':u;
+// Сколько граммов (мл) на 1 штуку соответствует норме «на 100 шт» в единице продукта.
+const WF={'кг':10,'л':10,'г':0.01,'мл':0.01};
 const ending=n=>{n=Math.abs(n)%100;const n1=n%10;if(n>10&&n<20)return 'ов';if(n1===1)return '';if(n1>=2&&n1<=4)return 'а';return 'ов'};
 const dLabel=s=>{const tt=today();if(s===tt)return t('Сегодня');const y=new Date();y.setDate(y.getDate()-1);if(s===iso(y))return t('Вчера');const [Y,M,D]=s.split('-');return D+'.'+M+'.'+Y};
 function toast(msg){const el=$('#toast');el.textContent=msg;el.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>el.hidden=true,2400)}
@@ -535,8 +545,8 @@ function fBuy(){
     const list=ings.filter(i=>(i.group||'Прочее')===g); if(!list.length) continue;
     h+=`<div class="grp">${esc(t(g))}</div>`;
     for(const i of list){const b=S.buy[i.id];const on=!!b;const u=t(i.unit);
-      h+=`<div class="item ${on?'on':''}"><div class="hd" data-buyon="${i.id}"><input type="checkbox" tabindex="-1" ${on?'checked':''} aria-label="${esc(tn(i.name))}"><span class="nm">${esc(tn(i.name))}</span><span class="lp">${i.price?money(i.price)+'/'+u:''}</span></div>`;
-      if(on) h+=`<div class="bd"><label class="f">${t('Сколько')}<span class="inrow"><input type="number" step="any" min="0" inputmode="decimal" data-bqty="${i.id}" value="${b.qty??''}" placeholder="0">${utBtn('b:'+i.id,i.unit)||`<span class="uu">${u}</span>`}</span></label><label class="f">${t('Цена за {0}, ₼',u)}<input type="number" step="any" min="0" inputmode="decimal" data-bprice="${i.id}" value="${b.price??''}"></label><span class="sum" id="bs-${i.id}"></span></div>`;
+      h+=`<div class="item ${on?'on':''}"><div class="hd" data-buyon="${i.id}"><input type="checkbox" tabindex="-1" ${on?'checked':''} aria-label="${esc(tn(i.name))}"><span class="nm">${esc(tn(i.name))}</span><span class="lp">${i.price?money(i.price*PM(i.unit))+'/'+t(PU(i.unit)):''}</span></div>`;
+      if(on) h+=`<div class="bd"><label class="f">${t('Сколько')}<span class="inrow"><input type="number" step="any" min="0" inputmode="decimal" data-bqty="${i.id}" value="${b.qty??''}" placeholder="0">${utBtn('b:'+i.id,i.unit)||`<span class="uu">${u}</span>`}</span></label><label class="f">${t('Цена за {0}, ₼',t(PU(i.unit)))}<input type="number" step="any" min="0" inputmode="decimal" data-bprice="${i.id}" value="${b.price??''}"></label><span class="sum" id="bs-${i.id}"></span></div>`;
       h+=`</div>`}
   }
   h+=`<div class="bar"><div class="t">${t('Потрачено в маркете')}<b id="tot">0 ₼</b></div><button class="btn" type="submit" id="go">${t('Записать закупку')}</button></div>`;
@@ -587,7 +597,7 @@ function refreshTotals(){
       if(ks.length) h+=`<div style="margin-top:8px">${t('Спишется:')} ${ks.map(k=>`${esc(iName(k))} <b>${iq(use[k],k)}</b>`).join(' · ')}</div>`;
       pv.hidden=!h; pv.innerHTML=h;
     }}
-  else if(S.type==='purchase'){let s=0,n=0;for(const id in S.buy){const b=S.buy[id];const v=conv('b:'+id,+b.qty||0)*(+b.price||0);s+=v;if(+b.qty>0)n++;const el=$('#bs-'+id);if(el)el.textContent=v?money(v):''}
+  else if(S.type==='purchase'){let s=0,n=0;for(const id in S.buy){const b=S.buy[id];const u0=ing(id)?.unit;const v=conv('b:'+id,+b.qty||0,u0)*((+b.price||0)/PM(u0));s+=v;if(+b.qty>0)n++;const el=$('#bs-'+id);if(el)el.textContent=v?money(v):''}
     if(tot) tot.textContent=money(s)+(n?' · '+t('{0} поз.',n):''); if(go) go.disabled=!n}
 }
 
@@ -639,7 +649,7 @@ function vLog(){
       let name='',sub='',right='';
       if(isOrder(o)){const ls=orderLines(o);name=ls.map(l=>`${pName(l.item)} × ${nf(l.qty)}`).join(', ');
         sub=(o.channel==='wholesale'?t('Опт'):t('Штучно'))+(o.client?' · '+esc(o.client):'')+(orderPaid(o)?'':` · <b class="minus">${t('в долг')}</b>`);right=money(o.amount)}
-      else if(o.type==='purchase'){name=iName(o.item);sub=`${iq(o.qty,o.item)} × ${money(o.price??o.amount/o.qty)}`;right='−'+money(o.amount)}
+      else if(o.type==='purchase'){name=iName(o.item);sub=`${iq(o.qty,o.item)} × ${money((o.price??o.amount/o.qty)*PM(ing(o.item)?.unit))}/${t(PU(ing(o.item)?.unit))}`;right='−'+money(o.amount)}
       else if(o.type==='production'){name=pName(o.item);right=nf(o.qty)+' '+t('шт')}
       else if(o.type==='expense'){name=t(o.category);sub=esc(o.note||'');right='−'+money(o.amount)}
       else if(o.type==='waste'){name=o.kind==='ingredient'?iName(o.item):pName(o.item);sub=esc(t(o.reason||''));right=o.kind==='ingredient'?iq(o.qty,o.item):qf(o.qty)+' '+t('шт')}
@@ -662,16 +672,16 @@ function vCat(){
   for(const p of C.products) h+=`<div class="cat-row" data-pid="${p.id}"><label class="f">${t('Название')}<input data-k="name" data-orig="${esc(p.name)}" value="${esc(tn(p.name))}"></label><label class="f">${t('Штучно, ₼')}<input type="number" step="any" data-k="retail" value="${p.retail}"></label><label class="f">${t('Опт, ₼/шт')}<input type="number" step="any" data-k="wholesale" value="${p.wholesale}"></label><button class="btn ghost sm" data-rmp="${p.id}" type="button">${t('Убрать')}</button></div>`;
   h+=`<p style="margin:10px 0 0"><button class="btn ghost" data-act="addP" type="button">${t('+ Вид хинкали')}</button></p></div>`;
   h+=`<div class="card"><h2>${t('Продукты и цены')}</h2><p class="note" style="margin-top:-4px">${t('Цена обновляется сама после каждой закупки.')}</p>`;
-  for(const i of C.ingredients) h+=`<div class="cat-row ing" data-iid="${i.id}"><label class="f">${t('Название')}<input data-k="name" data-orig="${esc(i.name)}" value="${esc(tn(i.name))}"></label><label class="f">${t('Ед.')}<select data-k="unit">${UNITS.map(u=>`<option value="${u}" ${u===i.unit?'selected':''}>${t(u)}</option>`).join('')}</select></label><label class="f">${t('Цена, ₼')}<input type="number" step="any" data-k="price" value="${i.price??''}"></label><label class="f">${t('Раздел')}<select data-k="group">${GROUPS.map(g=>`<option value="${g}" ${g===(i.group||'Прочее')?'selected':''}>${t(g)}</option>`).join('')}</select></label><button class="btn ghost sm" data-rmi="${i.id}" type="button">${t('Убрать')}</button></div>`;
+  for(const i of C.ingredients) h+=`<div class="cat-row ing" data-iid="${i.id}"><label class="f">${t('Название')}<input data-k="name" data-orig="${esc(i.name)}" value="${esc(tn(i.name))}"></label><label class="f">${t('Ед.')}<select data-k="unit">${UNITS.map(u=>`<option value="${u}" ${u===i.unit?'selected':''}>${t(u)}</option>`).join('')}</select></label><label class="f">${PM(i.unit)>1?t('Цена за {0}, ₼',t(PU(i.unit))):t('Цена, ₼')}<input type="number" step="any" data-k="price" value="${i.price!=null?+(i.price*PM(i.unit)).toFixed(4):''}"></label><label class="f">${t('Раздел')}<select data-k="group">${GROUPS.map(g=>`<option value="${g}" ${g===(i.group||'Прочее')?'selected':''}>${t(g)}</option>`).join('')}</select></label><button class="btn ghost sm" data-rmi="${i.id}" type="button">${t('Убрать')}</button></div>`;
   h+=`<p style="margin:10px 0 0"><button class="btn ghost" data-act="addI" type="button">${t('+ Продукт')}</button></p></div>`;
   const sel=S.recProd&&prod(S.recProd)?S.recProd:C.products[0]?.id;
   h+=`<div class="card"><h2>${t('Техкарта')}</h2><p class="note" style="margin-top:-4px">${t('NOTE_TECH')}</p>`;
   if(sel){h+=`<label class="f" style="margin-top:10px">${t('Вид')}<select id="recSel">${C.products.map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(tn(p.name))}</option>`).join('')}</select></label><div class="rec">`;
     const r=C.recipes?.[sel]||{};
     for(const i of C.ingredients){if(i.group==='Упаковка')continue;
-      const w=i.unit==='кг'||i.unit==='л'; const v=r[i.id]?(w?+(r[i.id]*10).toFixed(2):+(+r[i.id]).toFixed(3)):'';
-      const lab=w?t(i.unit==='кг'?'{0}, г на 1 шт':'{0}, мл на 1 шт',esc(tn(i.name))):t('{0}, {1} на 100 шт',esc(tn(i.name)),t(i.unit));
-      h+=`<label class="f">${lab}<input type="number" step="any" min="0" inputmode="decimal" data-rec="${i.id}" data-w="${w?1:0}" value="${v}" placeholder="—"></label>`}
+      const w=!!WF[i.unit]; const v=r[i.id]?(w?+(r[i.id]*WF[i.unit]).toFixed(2):+(+r[i.id]).toFixed(3)):'';
+      const lab=w?t((i.unit==='кг'||i.unit==='г')?'{0}, г на 1 шт':'{0}, мл на 1 шт',esc(tn(i.name))):t('{0}, {1} на 100 шт',esc(tn(i.name)),t(i.unit));
+      h+=`<label class="f">${lab}<input type="number" step="any" min="0" inputmode="decimal" data-rec="${i.id}" data-w="${w?WF[i.unit]:0}" value="${v}" placeholder="—"></label>`}
     h+=`</div><div class="calcbox"><label class="f">${t('Калькулятор: сколько штук?')}<input type="number" id="calcN" min="1" step="1" inputmode="numeric" value="${S.calcN||1000}"></label><div id="recCost"></div></div>`}
   h+=`<label class="f" style="margin-top:14px">${t('Предупреждать, когда продуктов хватает меньше чем на (шт)')}<input type="number" id="lowPcs" min="0" step="50" inputmode="numeric" value="${C.lowPcs??200}"></label>`;
   h+=`</div><button class="btn" data-act="saveCat" type="button">${t('Сохранить настройки')}</button>`;
@@ -698,7 +708,7 @@ function refreshRecipe(){
   const box=$('#recCost'); if(!box) return;
   const N=Math.max(0,Math.round(+($('#calcN')?.value)||0)); if(N) S.calcN=N;
   const {avg,I}=calc(); let cost=0,miss=false,short=false,rows='';
-  $$('[data-rec]').forEach(x=>{const v=+x.value||0;if(!v)return;const id=x.dataset.rec;const per100=x.dataset.w==='1'?v/10:v;const need=per100*N/100;const pr=avg[id]||0;if(!pr)miss=true;cost+=need*pr;
+  $$('[data-rec]').forEach(x=>{const v=+x.value||0;if(!v)return;const id=x.dataset.rec;const wf=+x.dataset.w;const per100=wf?v/wf:v;const need=per100*N/100;const pr=avg[id]||0;if(!pr)miss=true;cost+=need*pr;
     const have=I[id]?.stock||0;const sh=need>have+1e-9;if(sh)short=true;
     rows+=`<tr><td>${esc(iName(id))}</td><td class="n"><b>${iq(need,id)}</b></td><td class="n">${sh?`<span class="pill bad">${iq(have,id)}</span>`:iq(have,id)}</td><td class="n">${money(need*pr)}</td></tr>`});
   if(!rows||!N){box.innerHTML='';return}
@@ -719,10 +729,11 @@ function readCatDom(){
   $$('[data-pid]').forEach(r=>{const p=C.products.find(x=>x.id===r.dataset.pid);if(!p)return;
     p.name=nameFrom(r.querySelector('[data-k=name]'));p.retail=+r.querySelector('[data-k=retail]').value||0;p.wholesale=+r.querySelector('[data-k=wholesale]').value||0});
   $$('[data-iid]').forEach(r=>{const i=C.ingredients.find(x=>x.id===r.dataset.iid);if(!i)return;
-    i.name=nameFrom(r.querySelector('[data-k=name]'));i.unit=r.querySelector('[data-k=unit]').value;i.group=r.querySelector('[data-k=group]').value;const pr=r.querySelector('[data-k=price]').value;i.price=pr===''?null:+pr});
+    i.name=nameFrom(r.querySelector('[data-k=name]'));const oldU=i.unit;i.unit=r.querySelector('[data-k=unit]').value;i.group=r.querySelector('[data-k=group]').value;const pr=r.querySelector('[data-k=price]').value;i.price=pr===''?null:+(+pr/PM(oldU)).toFixed(6)});
   const sel=$('#recSel')?.value;
-  if(sel){const r={};$$('[data-rec]').forEach(x=>{const v=+x.value;if(v)r[x.dataset.rec]=x.dataset.w==='1'?+(v/10).toFixed(5):v});C.recipes=C.recipes||{};C.recipes[sel]=r}
+  if(sel){const r={};$$('[data-rec]').forEach(x=>{const v=+x.value;if(v){const wf=+x.dataset.w;r[x.dataset.rec]=wf?+(v/wf).toFixed(6):v}});C.recipes=C.recipes||{};C.recipes[sel]=r}
   const lp=$('#lowPcs');if(lp)C.lowPcs=Math.max(0,+lp.value||0);
+  convertUnits(C);
   return C;
 }
 
@@ -739,6 +750,19 @@ function load(){
     let fix=false;for(const i of S.catalog.ingredients||[]){if(i.group==='Мясо'&&i.unit==='л'){i.unit='кг';fix=true}}if(fix)persist();return}}
   catch(e){storageOk=false}
   S.catalog=JSON.parse(JSON.stringify(DEFAULT_CATALOG));S.ops=[];
+}
+const FACT={'кг>г':1000,'г>кг':0.001,'л>мл':1000,'мл>л':0.001};
+function convertUnits(C){
+  for(const i of C.ingredients){const old=S.catalog.ingredients.find(x=>x.id===i.id);if(!old||old.unit===i.unit)continue;
+    const f=FACT[old.unit+'>'+i.unit]; if(!f) continue;
+    for(const o of S.ops){if(o.item!==i.id)continue;
+      if(o.type==='purchase'){o.qty=+(o.qty*f).toFixed(5);if(o.price!=null)o.price=+(o.price/f).toFixed(8)}
+      else if(o.type==='waste'&&o.kind==='ingredient'){o.qty=+(o.qty*f).toFixed(5)}
+      else if(o.type==='adjust'&&o.kind==='ingredient'){o.delta=+(o.delta*f).toFixed(5);o.counted=+(o.counted*f).toFixed(5)}}
+    for(const pid in C.recipes||{}){const r=C.recipes[pid];if(r&&r[i.id])r[i.id]=+(r[i.id]*f).toFixed(6)}
+    if(i.price!=null) i.price=+(i.price/f).toFixed(8);
+    for(const k in S.buy) if(k===i.id) delete S.buy[k];
+  }
 }
 function saveCatalog(C,silent){S.catalog=C;persist();if(!silent){toast(t('Настройки сохранены'));render()}return true}
 function addOps(list){const base=Date.now();list.forEach((o,k)=>{o.id=o.id||uid();o.ts=base+k;S.ops.push(o)});persist();return true}
@@ -772,7 +796,7 @@ $('nav.tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]'
 
 view.addEventListener('click',e=>{
   const hd=e.target.closest('[data-buyon]');
-  if(hd){const id=hd.dataset.buyon;if(S.buy[id])delete S.buy[id];else S.buy[id]={qty:'',price:ing(id)?.price??''};render();setTimeout(()=>$(`[data-bqty="${id}"]`)?.focus(),0);return}
+  if(hd){const id=hd.dataset.buyon;if(S.buy[id])delete S.buy[id];else{const g=ing(id);S.buy[id]={qty:'',price:g?.price!=null?+(g.price*PM(g.unit)).toFixed(4):''}}render();setTimeout(()=>$(`[data-bqty="${id}"]`)?.focus(),0);return}
   const b=e.target.closest('button');if(!b)return;
   const d=b.dataset;
   if(d.ut){S.ut[d.ut]=!S.ut[d.ut];b.textContent=t(S.ut[d.ut]?small(d.u):d.u);return S.tab==='add'?refreshTotals():undefined}
@@ -836,7 +860,7 @@ view.addEventListener('submit',e=>{
   }
   if(e.target.id==='countForm'){
     const {P,I}=calc(); const list=[];
-    $$('[data-cnt]').forEach(x=>{if(x.value==='')return;const [k,id]=x.dataset.cnt.split(':');const actual=+(k==='i'?conv('c:'+id,+x.value):+x.value).toFixed(5);if(!(actual>=0))return;
+    $$('[data-cnt]').forEach(x=>{if(x.value==='')return;const [k,id]=x.dataset.cnt.split(':');const actual=+(k==='i'?conv('c:'+id,+x.value,ing(id)?.unit):+x.value).toFixed(5);if(!(actual>=0))return;
       const cur=k==='p'?P[id]:I[id]; if(!cur) return; const delta=+(actual-cur.stock).toFixed(4); if(Math.abs(delta)<1e-9) return;
       list.push({type:'adjust',date:today(),kind:k==='p'?'product':'ingredient',item:id,delta,counted:actual,reason:cur.touched?'count':'opening'})});
     if(!list.length){toast(t('Ничего не изменилось'));return render()}
@@ -857,14 +881,14 @@ view.addEventListener('submit',e=>{
     msg=t('Слеплено {0} шт',nf(list.reduce((s,o)=>s+o.qty,0)));
   } else if(S.type==='purchase'){
     const trip=uid();
-    for(const id in S.buy){const b=S.buy[id];const q=+conv('b:'+id,+b.qty||0).toFixed(5);if(q<=0)continue;const pr=+b.price||0;list.push({type:'purchase',date,item:id,qty:q,price:pr,amount:r2(q*pr),trip})}
+    for(const id in S.buy){const b=S.buy[id];const u0=ing(id)?.unit;const q=+conv('b:'+id,+b.qty||0,u0).toFixed(5);if(q<=0)continue;const pr=+((+b.price||0)/PM(u0)).toFixed(6);list.push({type:'purchase',date,item:id,qty:q,price:pr,amount:r2(q*pr),trip})}
     if(!list.length) return toast(t('Укажите, сколько купили'));
     msg=t('Закупка записана: {0}',money(list.reduce((s,o)=>s+o.amount,0)));
   } else if(S.type==='expense'){
     const amt=+$('#fAmt').value;if(!(amt>0))return toast(t('Укажите сумму'));
     list=[{type:'expense',date,category:$('#fCat').value,amount:r2(amt),note:$('#fNote').value.trim()}];msg=t('Расход записан');
   } else if(S.type==='waste'){
-    const q=+(S.wkind==='ingredient'?conv('w',+$('#fQty').value):+$('#fQty').value).toFixed(5);if(!(q>0))return toast(t('Укажите количество'));
+    const q=+(S.wkind==='ingredient'?conv('w',+$('#fQty').value,ing($('#fItem').value)?.unit):+$('#fQty').value).toFixed(5);if(!(q>0))return toast(t('Укажите количество'));
     list=[{type:'waste',date,kind:S.wkind,item:$('#fItem').value,qty:q,reason:$('#fReason').value}];msg=t('Записано в убыток');
   } else {
     const amt=+$('#fAmt').value;if(!(amt>0))return toast(t('Укажите сумму'));
