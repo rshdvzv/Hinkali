@@ -153,6 +153,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 .filebtn{position:relative;overflow:hidden}
 .filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .hdr-r{display:flex;align-items:center;gap:10px}
+
+.btn.danger{background:var(--bad);color:var(--bg)}
 .langbtn{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 .8rem var(--f-body);padding:6px 10px;border-radius:8px;cursor:pointer}
 </style>
 </head>
@@ -160,7 +162,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wrap">
   <header class="top">
     <h1 id="appTitle">Xinkal sexi</h1>
-    <div class="hdr-r"><span class="sub" id="status"></span><button class="langbtn" id="langBtn" type="button">RU</button></div>
+    <div class="hdr-r"><span class="sub" id="status"></span><button class="langbtn" id="reloadBtn" type="button" aria-label="Yenilə">↻</button><button class="langbtn" id="langBtn" type="button">RU</button></div>
   </header>
   <nav class="tabs" role="tablist">
     <button role="tab" data-tab="home" aria-selected="true"></button>
@@ -217,7 +219,12 @@ const AZ={
 'Виды хинкали и цены':'Xinkal növləri və qiymətlər','Название':'Ad','Штучно, ₼':'Ədədlə, ₼','Опт, ₼/шт':'Topdan, ₼/əd.','Убрать':'Sil','+ Вид хинкали':'+ Xinkal növü',
 'Продукты и цены':'Ərzaq və qiymətlər','Цена обновляется сама после каждой закупки.':'Qiymət hər alışdan sonra özü yenilənir.','Ед.':'Vahid','Цена, ₼':'Qiymət, ₼','Раздел':'Bölmə','+ Продукт':'+ Ərzaq',
 'Рецептура на 100 штук':'100 ədəd üçün resept','Сколько продуктов уходит на 100 хинкали. Пустое поле — продукт не нужен.':'100 xinkala nə qədər ərzaq gedir. Boş xana — bu ərzaq lazım deyil.',
-'Сохранить настройки':'Ayarları yadda saxla','Язык':'Dil',
+'Сохранить настройки':'Ayarları yadda saxla',
+'Программа':'Proqram','Обновить программу':'Proqramı yenilə',
+'NOTE_RESET':'Qırmızı düymə bütün qeydləri silir: kassa, sifarişlər, alışlar, hazırlama. Qiymətlər və reseptlər qalır. Əvvəlcə ehtiyat nüsxə çıxarın.',
+'Удалить все записи':'Bütün qeydləri sil','Точно стереть все записи? ({0} шт.)':'Bütün qeydlər silinsin? ({0} ədəd)','Да, стереть':'Bəli, sil',
+'Все записи стёрты':'Bütün qeydlər silindi','Сбросить всё, включая цены и рецепты':'Hər şeyi sıfırla (qiymət və reseptlər də)',
+'Точно сбросить всё? Программа станет как новая.':'Hər şey sıfırlansın? Proqram yeni kimi olacaq.','Да, сбросить':'Bəli, sıfırla','Программа сброшена':'Proqram sıfırlandı','Язык':'Dil',
 'Резервная копия':'Ehtiyat nüsxə',
 'NOTE_BACKUP':'Bütün qeydlər yalnız bu telefonda saxlanılır. Həftədə bir dəfə nüsxəni «Fayllar», Telegram və ya WhatsApp-a saxlayın — telefon itsə və ya xarab olsa, uçotu yeni telefonda bərpa etmək olar.',
 'Последняя копия: сегодня.':'Son nüsxə: bu gün.','Последняя копия: {0} дн. назад.':'Son nüsxə: {0} gün əvvəl.','Копию ещё не делали.':'Hələ nüsxə çıxarılmayıb.',
@@ -248,6 +255,7 @@ const RU_FIX={'NOTE_RESULT':'«В плюсе / в минусе» — сколь�
 'ONBOARD':'С чего начать: нажмите «+ Записать» → «Касса» и положите сумму, которая сейчас на руках. Потом записывайте закупки, лепку и заказы. Цены и рецептуры можно поправить в «Настройках».',
 'NOTE_CASH':'Здесь — только движение денег без продажи и покупки: стартовая сумма, вложили свои, забрали себе.',
 'NOTE_STOCK':'Красный минус значит, что слепили больше, чем записано в закупках — проверьте, всё ли купленное внесли. «Хватит на» — примерно, по самому «прожорливому» виду.',
+'NOTE_RESET':'Красная кнопка стирает все записи: кассу, заказы, закупки, лепку. Цены и рецепты остаются. Сначала сделайте резервную копию.',
 'NOTE_BACKUP':'Все записи хранятся только в этом телефоне. Раз в неделю сохраняйте копию в «Файлы», Telegram или WhatsApp — если телефон потеряется или сломается, учёт можно будет восстановить на новом.',
 'RESTORE_Q':'В копии {1} записей от {0}. Текущие данные на телефоне ({2} записей) будут заменены.',
 'Выручка · {0}':'Выручка · {0} заказ{E}'};
@@ -559,7 +567,13 @@ function vCat(){
   h+=`<div class="card"><h2>${t('Резервная копия')}</h2><p class="note" style="margin-top:-4px">${t('NOTE_BACKUP')} ${S.lastBackup?(days===0?t('Последняя копия: сегодня.'):t('Последняя копия: {0} дн. назад.',days)):`<b>${t('Копию ещё не делали.')}</b>`}</p>
   <div class="backup"><button class="btn" data-act="backup" type="button">${t('Сохранить копию')}</button><label class="btn ghost filebtn">${t('Восстановить из копии')}<input type="file" id="restoreFile" accept=".json,application/json"></label></div>`;
   if(S.pendingRestore){const d=S.pendingRestore;h+=`<div class="alert bad" style="margin-top:10px">${t('RESTORE_Q',esc((d.saved||'').slice(0,10)),d.ops.length,S.ops.length)} <button class="btn sm" data-act="doRestore" type="button">${t('Заменить')}</button> <button class="x" data-act="noRestore" type="button">${t('Отмена')}</button></div>`}
-  h+=`</div></div>`;
+  h+=`</div>`;
+  h+=`<div class="card"><h2>${t('Программа')}</h2><div class="backup" style="margin-top:0"><button class="btn ghost" data-act="reload" type="button">↻ ${t('Обновить программу')}</button></div>
+  <p class="note">${t('NOTE_RESET')}</p><div class="backup">`;
+  if(S.confirmReset==='ops') h+=`<div class="alert bad" style="margin:0;width:100%">${t('Точно стереть все записи? ({0} шт.)',S.ops.length)} <button class="btn sm danger" data-act="resetOps" type="button">${t('Да, стереть')}</button> <button class="x" data-act="noReset" type="button">${t('Отмена')}</button></div>`;
+  else if(S.confirmReset==='all') h+=`<div class="alert bad" style="margin:0;width:100%">${t('Точно сбросить всё? Программа станет как новая.')} <button class="btn sm danger" data-act="resetAll" type="button">${t('Да, сбросить')}</button> <button class="x" data-act="noReset" type="button">${t('Отмена')}</button></div>`;
+  else h+=`<button class="btn danger" data-act="askResetOps" type="button">🗑 ${t('Удалить все записи')}</button><button class="x" data-act="askResetAll" type="button">${t('Сбросить всё, включая цены и рецепты')}</button>`;
+  h+=`</div></div></div>`;
   return h;
 }
 // Имя из поля: если пользователь не менял переведённое стандартное название — храним исходное.
@@ -612,6 +626,7 @@ function restoreBackup(file){
 }
 
 /* ---------- events ---------- */
+$('#reloadBtn').addEventListener('click',()=>location.reload());
 $('#langBtn').addEventListener('click',()=>{if(S.tab==='cat')S.catalog=readCatDom();setLang(LANG==='az'?'ru':'az')});
 $('nav.tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(!b)return;
   if(S.tab==='cat'&&b.dataset.tab!=='cat') S.catalog=readCatDom();
@@ -643,6 +658,12 @@ view.addEventListener('click',e=>{
   if(a==='backup') return makeBackup();
   if(a==='doRestore'){const dd=S.pendingRestore;S.pendingRestore=null;S.catalog=dd.catalog||S.catalog;S.ops=dd.ops;persist();toast(t('Данные восстановлены'));return render()}
   if(a==='noRestore'){S.pendingRestore=null;return render()}
+  if(a==='reload') return location.reload();
+  if(a==='askResetOps'){S.confirmReset='ops';return render()}
+  if(a==='askResetAll'){S.confirmReset='all';return render()}
+  if(a==='noReset'){S.confirmReset=null;return render()}
+  if(a==='resetOps'){S.confirmReset=null;S.ops=[];persist();toast(t('Все записи стёрты'));S.tab='home';return render()}
+  if(a==='resetAll'){S.confirmReset=null;S.ops=[];S.lastBackup=null;S.catalog=JSON.parse(JSON.stringify(DEFAULT_CATALOG));persist();toast(t('Программа сброшена'));S.tab='home';return render()}
 });
 
 view.addEventListener('input',e=>{
