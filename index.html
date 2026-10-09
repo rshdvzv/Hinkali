@@ -173,6 +173,16 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 .uu{flex:none;color:var(--muted);font-size:.85rem;min-width:30px}
 .btn.share{width:100%;margin:4px 0 6px;background:var(--surface);color:var(--ink);border:1px solid var(--accent)}
 pre.rep{white-space:pre-wrap;font:.85rem/1.5 var(--f-body);background:var(--bg);padding:10px;border-radius:8px;user-select:text;-webkit-user-select:text;margin:8px 0}
+.plan{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;margin-bottom:10px}
+.plan.late{border-color:var(--bad)}
+.ph{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.po{border-top:1px solid var(--line);padding:10px 0}
+.pot{display:flex;justify-content:space-between;gap:10px}.pot span{font-family:var(--f-num)}
+.pol{font-size:.85rem;color:var(--muted);margin:4px 0 8px}
+.poa{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.pm{background:var(--dough);border-radius:8px;padding:8px 10px;font-size:.88rem}
+.types{grid-template-columns:repeat(4,1fr)!important}
+@media (max-width:420px){.types{grid-template-columns:repeat(4,1fr)!important}.types button{font-size:.78rem;padding:10px 2px}}
 .langbtn{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 .8rem var(--f-body);padding:6px 10px;border-radius:8px;cursor:pointer}
 </style>
 </head>
@@ -201,7 +211,7 @@ const $$ = s => [...document.querySelectorAll(s)];
 const view = $('#view');
 
 /* ---------- язык / dil ---------- */
-const APP_VER='10';
+const APP_VER='11';
 const LANG_KEY='khinkali.lang';
 let LANG='az';
 try{LANG=localStorage.getItem(LANG_KEY)||'az'}catch(_){}
@@ -239,7 +249,11 @@ const AZ={
 'Виды хинкали и цены':'Xinkal növləri və qiymətlər','Название':'Ad','Штучно, ₼':'Ədədlə, ₼','Опт, ₼/шт':'Topdan, ₼/əd.','Убрать':'Sil','+ Вид хинкали':'+ Xinkal növü',
 'Продукты и цены':'Ərzaq və qiymətlər','Цена обновляется сама после каждой закупки.':'Qiymət hər alışdan sonra özü yenilənir.','Ед.':'Vahid','Цена, ₼':'Qiymət, ₼','Раздел':'Bölmə','+ Продукт':'+ Ərzaq',
 'Рецептура на 100 штук':'100 ədəd üçün resept','Сколько продуктов уходит на 100 хинкали. Пустое поле — продукт не нужен.':'100 xinkala nə qədər ərzaq gedir. Boş xana — bu ərzaq lazım deyil.',
-'Сохранить настройки':'Ayarları yadda saxla','Отправить отчёт':'Hesabatı göndər','отчёт':'hesabat','Прибыль по себестоимости':'Maya dəyərinə görə mənfəət',
+'Сохранить настройки':'Ayarları yadda saxla','Предзаказ':'Ön sifariş','На какой день':'Hansı günə','Записать предзаказ':'Ön sifarişi yaz',
+'Предзаказы и план':'Ön sifarişlər və plan','Нужно слепить':'Hazırlamaq lazımdır','Всё есть на складе':'Hamısı anbarda var','Для плана не хватает:':'Plan üçün çatmır:',
+'Выдан · оплачен':'Verildi · ödənildi','Выдан · в долг':'Verildi · borca','Отменить':'Ləğv et','Точно отменить?':'Ləğv edilsin?','Просрочен':'Gecikib','Завтра':'Sabah',
+'Для предзаказа укажите клиента':'Ön sifariş üçün müştərini yazın','Укажите дату':'Tarixi yazın','Предзаказ записан':'Ön sifariş yazıldı','Заказ выдан':'Sifariş verildi',
+'Предзаказ отменён':'Ön sifariş ləğv edildi','на {0}':'{0} üçün','выдан':'verilib','отменён':'ləğv edilib','ждёт':'gözləyir','Отправить отчёт':'Hesabatı göndər','отчёт':'hesabat','Прибыль по себестоимости':'Maya dəyərinə görə mənfəət',
 'Остатки готовых':'Hazır xinkal qalığı','продано {0}':'satılıb {0}','Отчёт скопирован — вставьте в WhatsApp или Telegram':'Hesabat kopyalandı — WhatsApp və ya Telegram-a yapışdırın','Выделите текст и скопируйте:':'Mətni seçib kopyalayın:','Версия':'Versiya','Склад':'Anbar',
 '+ В кассу':'+ Kassaya','− Из кассы':'− Kassadan','Сохранить':'Yadda saxla','Заканчивается:':'Az qalıb:',
 'В программе':'Proqramda','По факту':'Faktiki','Заполнено позиций':'Doldurulub','Сохранить остатки':'Qalıqları yadda saxla','Сохранить пересчёт':'Sayımı yadda saxla',
@@ -325,6 +339,7 @@ const UNITS=['кг','г','л','мл','шт','пучок','уп'];
 const pad=n=>String(n).padStart(2,'0');
 const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const today=()=>iso(new Date());
+const tomorrow=()=>{const d=new Date();d.setDate(d.getDate()+1);return iso(d)};
 const nf=(n,d=0)=>(+n||0).toLocaleString('ru-RU',{minimumFractionDigits:d,maximumFractionDigits:d});
 const money=n=>nf(n,2)+' ₼';
 const sign=n=>(n>0?'+':n<0?'−':'')+nf(Math.abs(n),2)+' ₼';
@@ -462,7 +477,7 @@ function vHome(){
     <button data-go="production">${t('Лепка')}</button>
     <button data-go="purchase">${t('Закупка')}</button>
     <button data-go="expense">${t('Расход')}</button>
-  </div>`;
+  </div>${planBlock(P,I)}`;
   h+=periodChips();
   const res=T.result;
   h+=`<div class="result">
@@ -526,6 +541,8 @@ function reportText(){
     for(const p of rows){const x=P[p.id];L.push('  • '+tn(p.name)+': '+nf(x.stock)+' '+t('шт')+(x.ret+x.whs?' ('+t('продано {0}',nf(x.ret+x.whs))+')':''))}}
   if(T.debts.length){L.push('');L.push('🧾 '+t('Должны оплатить')+': '+money(T.debt));
     for(const o of T.debts) L.push('  • '+(o.client||t('Клиент без имени'))+': '+money(o.amount));}
+  const op=S.ops.filter(o=>o.type==='preorder'&&o.status==='open');
+  if(op.length){L.push('');L.push('📋 '+t('Предзаказы и план')+':');for(const o of op.sort((a,b)=>a.due<b.due?-1:1))L.push('  • '+dayName(o.due)+' — '+(o.client||'')+': '+o.lines.map(l=>tn(prod(l.item)?.name||'')+' × '+nf(l.qty)).join(', '))}
   const low=lowList(I);
   if(low.length){L.push('');L.push('⚠️ '+t('Заканчивается:')+' '+low.map(([i,n])=>tn(i.name)+' (~'+nf(n)+' '+t('шт')+')').join(', '))}
   return L.join('\n');
@@ -537,6 +554,38 @@ async function shareReport(){
   }catch(e){if(e&&e.name==='AbortError')return}
   try{await navigator.clipboard.writeText(text);toast(t('Отчёт скопирован — вставьте в WhatsApp или Telegram'))}
   catch(e){S.reportShow=text;render()}
+}
+function dayName(d){
+  try{const [Y,M,D]=d.split('-').map(Number);const dt=new Date(Y,M-1,D);
+    const w=(LANG==='az'?['Bazar','Bazar ertəsi','Çərşənbə axşamı','Çərşənbə','Cümə axşamı','Cümə','Şənbə']:['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'])[dt.getDay()];
+    const lab=dLabel(d)===t('Сегодня')||dLabel(d)===t('Вчера')?dLabel(d):(d===tomorrow()?t('Завтра'):w);
+    return lab.charAt(0).toUpperCase()+lab.slice(1)+', '+pad(D)+'.'+pad(M);
+  }catch(e){return d}
+}
+function planBlock(P,I){
+  const open=S.ops.filter(o=>o.type==='preorder'&&o.status==='open').sort((a,b)=>a.due<b.due?-1:a.due>b.due?1:(a.ts||0)-(b.ts||0));
+  if(!open.length) return '';
+  const avail={}; for(const p of S.catalog.products) avail[p.id]=Math.max(0,P[p.id]?.stock||0);
+  const byDay={}; for(const o of open)(byDay[o.due]=byDay[o.due]||[]).push(o);
+  const rec=S.catalog.recipes||{}, needIng={}; const td=today();
+  let h=`<h2>${t('Предзаказы и план')}</h2>`;
+  for(const d of Object.keys(byDay).sort()){
+    const make={};
+    for(const o of byDay[d]) for(const l of o.lines){const take=Math.min(avail[l.item]||0,+l.qty||0);avail[l.item]=(avail[l.item]||0)-take;const m=(+l.qty||0)-take;if(m>0)make[l.item]=(make[l.item]||0)+m}
+    for(const pid in make){const r=rec[pid]||{};for(const k in r)needIng[k]=(needIng[k]||0)+(+r[k]||0)/100*make[pid]}
+    const late=d<td;
+    h+=`<div class="plan ${late?'late':''}"><div class="ph"><b>${dayName(d)}</b>${late?`<span class="pill bad">${t('Просрочен')}</span>`:''}</div>`;
+    for(const o of byDay[d]){
+      h+=`<div class="po"><div class="pot"><b>${esc(o.client||'')}</b><span>${money(o.amount)}</span></div>
+      <div class="pol">${o.lines.map(l=>esc(pName(l.item))+' × <b>'+nf(l.qty)+'</b>').join('<br>')} · ${o.channel==='wholesale'?t('Опт'):t('Штучно')}</div>
+      <div class="poa"><button class="btn sm" type="button" data-pre="${o.id}" data-pa="paid">${t('Выдан · оплачен')}</button><button class="btn ghost sm" type="button" data-pre="${o.id}" data-pa="debt">${t('Выдан · в долг')}</button><button class="x" type="button" data-pre="${o.id}" data-pa="cancel">${S.confirmPre===o.id?t('Точно отменить?'):t('Отменить')}</button></div></div>`;
+    }
+    const mk=Object.keys(make);
+    h+=`<div class="pm">${mk.length?`🥟 ${t('Нужно слепить')}: ${mk.map(id=>esc(pName(id))+' <b>'+nf(make[id])+'</b> '+t('шт')).join(', ')}`:`✓ ${t('Всё есть на складе')}`}</div></div>`;
+  }
+  const shortI=Object.keys(needIng).filter(k=>needIng[k]>(I[k]?.stock||0)+1e-9);
+  if(shortI.length) h+=`<div class="alert bad">${t('Для плана не хватает:')} ${shortI.map(k=>esc(iName(k))+' — '+iq(needIng[k]-Math.max(0,I[k]?.stock||0),k)).join(', ')}</div>`;
+  return h;
 }
 function quickForm(){
   if(!S.quick) return '';
@@ -555,20 +604,26 @@ function lowAlert(I){
 function vAdd(){
   const C=S.catalog;
   if(!C.products.length) return `<div class="empty">${t('Нет видов хинкали. Добавьте их в «Настройках».')}</div>`;
-  const TT=[['order','Заказ'],['production','Лепка'],['purchase','Закупка'],['expense','Расход'],['waste','В мусор'],['cash','Касса']];
+  const TT=[['order','Заказ'],['preorder','Предзаказ'],['production','Лепка'],['purchase','Закупка'],['expense','Расход'],['waste','В мусор'],['cash','Касса']];
   let h=`<div class="types">${TT.map(([k,l])=>`<button data-ftype="${k}" aria-pressed="${S.type===k}">${t(l)}</button>`).join('')}</div>`;
   h+=`<form id="opForm" class="form"><label class="f">${t('Дата')}<input type="date" id="fDate" value="${S.date||today()}"></label>`;
-  h+=({order:fOrder,production:fProd,purchase:fBuy,expense:fExp,waste:fWaste,cash:fCash})[S.type]();
+  h+=({order:()=>fOrder(false),preorder:()=>fOrder(true),production:fProd,purchase:fBuy,expense:fExp,waste:fWaste,cash:fCash})[S.type]();
   h+=`</form>`;
   return h;
 }
-function fOrder(){
+function fOrder(pre){
   const w=S.channel==='wholesale';
   let h=`<div class="seg"><button type="button" data-chan="retail" aria-pressed="${!w}">${t('Штучно')}</button><button type="button" data-chan="wholesale" aria-pressed="${w}">${t('Оптом')}</button></div>`;
   for(const p of S.catalog.products){
     const l=S.lines[p.id]||{}; const price=l.price??(w?p.wholesale:p.retail); const q=+l.qty||0;
     h+=`<div class="pl ${q?'on':''}" id="pl-${p.id}"><div class="nm">${esc(tn(p.name))}<div class="pr">${t('цена ₼/шт')} <input type="number" step="any" min="0" inputmode="decimal" data-lprice="${p.id}" value="${price}"></div></div>
     <div class="step"><button type="button" data-step="${p.id}" data-d="-1">−</button><input type="number" min="0" step="1" inputmode="numeric" data-lqty="${p.id}" value="${q||''}" placeholder="0"><button type="button" data-step="${p.id}" data-d="1">+</button></div></div>`;
+  }
+  if(pre){
+    h+=`<label class="f">${t('Клиент')}<input type="text" id="fClient" value="${esc(S.client||'')}" placeholder="${t('Кафе, магазин…')}"></label>
+    <label class="f">${t('На какой день')}<input type="date" id="fDue" value="${S.due||tomorrow()}"></label>
+    <div class="bar"><div class="t">${t('Сумма заказа')}<b id="tot">0 ₼</b></div><button class="btn" type="submit" id="go">${t('Записать предзаказ')}</button></div>`;
+    return h;
   }
   h+=`<label class="f">${w?t('Клиент'):t('Клиент (необязательно)')}<input type="text" id="fClient" value="${esc(S.client||'')}" placeholder="${w?t('Кафе, магазин…'):t('Можно оставить пустым')}"></label>
   <div class="seg"><button type="button" data-paidsel="1" aria-pressed="${S.paid}">${t('Оплачено сразу')}</button><button type="button" data-paidsel="0" aria-pressed="${!S.paid}">${t('В долг')}</button></div>
@@ -622,7 +677,7 @@ function fCash(){
 
 function refreshTotals(){
   const tot=$('#tot'), go=$('#go');
-  if(S.type==='order'){let s=0,n=0;for(const p of S.catalog.products){const l=S.lines[p.id];if(!l)continue;const q=+l.qty||0;const pr=l.price??(S.channel==='wholesale'?p.wholesale:p.retail);s+=q*(+pr||0);n+=q;$('#pl-'+p.id)?.classList.toggle('on',q>0)}
+  if(S.type==='order'||S.type==='preorder'){let s=0,n=0;for(const p of S.catalog.products){const l=S.lines[p.id];if(!l)continue;const q=+l.qty||0;const pr=l.price??(S.channel==='wholesale'?p.wholesale:p.retail);s+=q*(+pr||0);n+=q;$('#pl-'+p.id)?.classList.toggle('on',q>0)}
     if(tot) tot.textContent=money(s)+(n?' · '+nf(n)+' '+t('шт'):''); if(go) go.disabled=!n}
   else if(S.type==='production'){let n=0;const use={};const rec=S.catalog.recipes||{};
     for(const p of S.catalog.products){const q=+S.make[p.id]||0;n+=q;$('#pm-'+p.id)?.classList.toggle('on',q>0);const r=rec[p.id]||{};for(const k in r)use[k]=(use[k]||0)+(+r[k]||0)/100*q}
@@ -684,7 +739,7 @@ function vStock(){
 function vLog(){
   if(!S.ops.length) return `<div class="empty">${t('Записей пока нет. Нажмите «+ Записать».')}</div>`;
   const by={}; for(const o of S.ops)(by[o.date]=by[o.date]||[]).push(o);
-  const L={order:'Заказ',sale:'Заказ',production:'Лепка',purchase:'Закупка',expense:'Расход',waste:'Мусор',cash:'Касса',adjust:'Склад'};
+  const L={order:'Заказ',sale:'Заказ',production:'Лепка',purchase:'Закупка',expense:'Расход',waste:'Мусор',cash:'Касса',adjust:'Склад',preorder:'Предзаказ'};
   let h='';
   for(const d of Object.keys(by).sort().reverse()){
     const day=by[d]; const rev=day.filter(isOrder).reduce((s,o)=>s+(+o.amount||0),0);
@@ -697,6 +752,7 @@ function vLog(){
       else if(o.type==='production'){name=pName(o.item);right=nf(o.qty)+' '+t('шт')}
       else if(o.type==='expense'){name=t(o.category);sub=esc(o.note||'');right='−'+money(o.amount)}
       else if(o.type==='waste'){name=o.kind==='ingredient'?iName(o.item):pName(o.item);sub=esc(t(o.reason||''));right=o.kind==='ingredient'?iq(o.qty,o.item):qf(o.qty)+' '+t('шт')}
+      else if(o.type==='preorder'){name=o.lines.map(l=>`${pName(l.item)} × ${nf(l.qty)}`).join(', ');sub=(o.client?esc(o.client)+' · ':'')+t('на {0}',dayName(o.due))+' · '+t(o.status==='done'?'выдан':o.status==='cancel'?'отменён':'ждёт');right=money(o.amount)}
       else if(o.type==='adjust'){const ing=o.kind==='ingredient';name=ing?iName(o.item):pName(o.item);const u=ing?iUnit(o.item):t('шт');
         sub=o.reason==='opening'?t('Начальный остаток'):t('Пересчёт: было {0}, стало {1}',ing?iq((+o.counted||0)-(+o.delta||0),o.item):qf((+o.counted||0)-(+o.delta||0))+' '+u,ing?iq(o.counted,o.item):qf(o.counted)+' '+u);right=(o.delta>0?'+':'')+(ing?iq(o.delta,o.item):qf(o.delta)+' '+u)}
       else if(o.type==='cash'){name=o.dir==='out'?t('Забрали из кассы'):t('Положили в кассу');sub=esc(o.note||'');right=(o.dir==='out'?'−':'+')+money(o.amount)}
@@ -848,6 +904,12 @@ view.addEventListener('click',e=>{
   if(d.lang){S.catalog=readCatDom();return setLang(d.lang)}
   if(d.period){S.period=d.period;return render()}
   if(d.act==='report') return shareReport();
+  if(d.pre){const o=S.ops.find(x=>x.id===d.pre);if(!o)return;
+    if(d.pa==='cancel'){if(S.confirmPre!==o.id){S.confirmPre=o.id;return render()}S.confirmPre=null;o.status='cancel';o.closed=today();persist();toast(t('Предзаказ отменён'));return render()}
+    const paid=d.pa==='paid';
+    o.status='done';o.closed=today();
+    addOps([{type:'order',date:today(),channel:o.channel,lines:o.lines.map(l=>({...l})),amount:o.amount,client:o.client,paid,from:o.id}]);
+    toast(t('Заказ выдан'));return render()}
   if(d.act==='closeReport'){S.reportShow=null;return render()}
   if(d.go){S.type=d.go;S.tab='add';render();window.scrollTo(0,0);return}
   if(d.ftype){S.type=d.ftype;return render()}
@@ -893,6 +955,7 @@ view.addEventListener('change',e=>{
   if(e.target.id==='pFrom'){S.from=e.target.value;return render()}
   if(e.target.id==='pTo'){S.to=e.target.value;return render()}
   if(e.target.id==='fDate') S.date=e.target.value;
+  if(e.target.id==='fDue') S.due=e.target.value;
   if(e.target.id==='fItem'&&S.type==='waste'){S.wItem=e.target.value;if(S.wkind==='ingredient'){const q=$('#fQty').value;render();$('#fQty').value=q}}
   if(e.target.id==='restoreFile'&&e.target.files[0]) restoreBackup(e.target.files[0]);
 });
@@ -914,7 +977,14 @@ view.addEventListener('submit',e=>{
   }
   const date=$('#fDate').value||today(); S.date=date===today()?'':date;
   let list=[], msg='';
-  if(S.type==='order'){
+  if(S.type==='preorder'){
+    const lines=[];for(const p of S.catalog.products){const l=S.lines[p.id];const q=+l?.qty||0;if(q>0)lines.push({item:p.id,qty:q,price:+(l.price??(S.channel==='wholesale'?p.wholesale:p.retail))||0})}
+    if(!lines.length) return toast(t('Добавьте хотя бы одну позицию'));
+    const c=$('#fClient').value.trim(); if(!c) return toast(t('Для предзаказа укажите клиента'));
+    const due=$('#fDue').value; if(!due) return toast(t('Укажите дату'));
+    list=[{type:'preorder',date,due,channel:S.channel,lines,client:c,amount:r2(lines.reduce((s,l)=>s+l.qty*l.price,0)),status:'open'}];
+    msg=t('Предзаказ записан');S.due='';
+  } else if(S.type==='order'){
     const lines=[];for(const p of S.catalog.products){const l=S.lines[p.id];const q=+l?.qty||0;if(q>0)lines.push({item:p.id,qty:q,price:+(l.price??(S.channel==='wholesale'?p.wholesale:p.retail))||0})}
     if(!lines.length) return toast(t('Добавьте хотя бы одну позицию'));
     const amount=r2(lines.reduce((s,l)=>s+l.qty*l.price,0));
