@@ -171,6 +171,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 .inrow input{flex:1;min-width:0}
 .ut{flex:none;min-width:46px;border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);font:700 .85rem var(--f-body);padding:9px 8px;border-radius:8px;cursor:pointer}
 .uu{flex:none;color:var(--muted);font-size:.85rem;min-width:30px}
+.btn.share{width:100%;margin:4px 0 6px;background:var(--surface);color:var(--ink);border:1px solid var(--accent)}
+pre.rep{white-space:pre-wrap;font:.85rem/1.5 var(--f-body);background:var(--bg);padding:10px;border-radius:8px;user-select:text;-webkit-user-select:text;margin:8px 0}
 .langbtn{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 .8rem var(--f-body);padding:6px 10px;border-radius:8px;cursor:pointer}
 </style>
 </head>
@@ -199,7 +201,7 @@ const $$ = s => [...document.querySelectorAll(s)];
 const view = $('#view');
 
 /* ---------- язык / dil ---------- */
-const APP_VER='9';
+const APP_VER='10';
 const LANG_KEY='khinkali.lang';
 let LANG='az';
 try{LANG=localStorage.getItem(LANG_KEY)||'az'}catch(_){}
@@ -237,7 +239,8 @@ const AZ={
 'Виды хинкали и цены':'Xinkal növləri və qiymətlər','Название':'Ad','Штучно, ₼':'Ədədlə, ₼','Опт, ₼/шт':'Topdan, ₼/əd.','Убрать':'Sil','+ Вид хинкали':'+ Xinkal növü',
 'Продукты и цены':'Ərzaq və qiymətlər','Цена обновляется сама после каждой закупки.':'Qiymət hər alışdan sonra özü yenilənir.','Ед.':'Vahid','Цена, ₼':'Qiymət, ₼','Раздел':'Bölmə','+ Продукт':'+ Ərzaq',
 'Рецептура на 100 штук':'100 ədəd üçün resept','Сколько продуктов уходит на 100 хинкали. Пустое поле — продукт не нужен.':'100 xinkala nə qədər ərzaq gedir. Boş xana — bu ərzaq lazım deyil.',
-'Сохранить настройки':'Ayarları yadda saxla','Версия':'Versiya','Склад':'Anbar',
+'Сохранить настройки':'Ayarları yadda saxla','Отправить отчёт':'Hesabatı göndər','отчёт':'hesabat','Прибыль по себестоимости':'Maya dəyərinə görə mənfəət',
+'Остатки готовых':'Hazır xinkal qalığı','продано {0}':'satılıb {0}','Отчёт скопирован — вставьте в WhatsApp или Telegram':'Hesabat kopyalandı — WhatsApp və ya Telegram-a yapışdırın','Выделите текст и скопируйте:':'Mətni seçib kopyalayın:','Версия':'Versiya','Склад':'Anbar',
 '+ В кассу':'+ Kassaya','− Из кассы':'− Kassadan','Сохранить':'Yadda saxla','Заканчивается:':'Az qalıb:',
 'В программе':'Proqramda','По факту':'Faktiki','Заполнено позиций':'Doldurulub','Сохранить остатки':'Qalıqları yadda saxla','Сохранить пересчёт':'Sayımı yadda saxla',
 'NOTE_OPENING':'Anbarda artıq nə varsa yazın: hazır xinkal və ərzaq. Bu başlanğıc qalıqdır — kassa dəyişmir. Boş xanalara toxunulmur.',
@@ -468,7 +471,9 @@ function vHome(){
     <div class="ln"><span>${t('Другие расходы')}</span><span class="minus">${T.exp?sign(-T.exp):'0,00 ₼'}</span></div>
     <div class="ln tot"><span>${res>=0?t('В плюсе'):t('В минусе')}</span><span class="${res>=0?'plus':'minus'}">${sign(res)}</span></div>
   </div>
-  <p class="note">${t('NOTE_RESULT',`<b class="${T.profitCost>=0?'plus':'minus'}">${sign(T.profitCost)}</b>`)}</p>`;
+  <p class="note">${t('NOTE_RESULT',`<b class="${T.profitCost>=0?'plus':'minus'}">${sign(T.profitCost)}</b>`)}</p>
+  <button class="btn share" type="button" data-act="report">📤 ${t('Отправить отчёт')}</button>`;
+  if(S.reportShow) h+=`<div class="card" style="margin-top:10px"><p class="note" style="margin-top:0">${t('Выделите текст и скопируйте:')}</p><pre class="rep">${esc(S.reportShow)}</pre><button class="x" data-act="closeReport" type="button">${t('Отмена')}</button></div>`;
   const avgCheck=T.orders?T.rev/T.orders:0, ws=T.made?T.waste/T.made*100:0;
   h+=`<h2>${t('Продажи за период')}</h2><div class="kpis">
     <div class="kpi"><span class="l">${t('Заказов')}</span><span class="v">${nf(T.orders)}</span><span class="d">${t('штучно {0} · опт {1}',T.ordersR,T.ordersW)}</span></div>
@@ -494,6 +499,45 @@ function vHome(){
   return h;
 }
 
+function periodLabel(){
+  const [a,b]=periodRange(); const f=d=>{const [Y,M,D]=d.split('-');return D+'.'+M+'.'+Y};
+  if(S.period==='all') return t('Всё время');
+  if(a===b) return f(a);
+  return f(a<'0001'?'2000-01-01':a)+' – '+f(b>'9000'?today():b);
+}
+function reportText(){
+  const {P,I,T}=calc(); const L=[];
+  L.push('🥟 '+t('Цех хинкали')+' — '+t('отчёт'));
+  L.push('📅 '+periodLabel());
+  L.push('');
+  L.push('💰 '+t('В кассе сейчас')+': '+money(T.cashNow));
+  L.push('');
+  L.push(t('Выручка · {0}',nf(T.orders))+': '+money(T.rev));
+  if(T.revR) L.push('  • '+t('Штучно')+': '+money(T.revR)+' ('+nf(T.soldR)+' '+t('шт')+')');
+  if(T.revW) L.push('  • '+t('Опт')+': '+money(T.revW)+' ('+nf(T.soldW)+' '+t('шт')+')');
+  L.push(t('Закупки в маркете')+': −'+money(T.buy));
+  if(T.exp) L.push(t('Другие расходы')+': −'+money(T.exp));
+  L.push((T.result>=0?'✅ '+t('В плюсе'):'🔻 '+t('В минусе'))+': '+sign(T.result));
+  L.push(t('Прибыль по себестоимости')+': '+sign(T.profitCost));
+  L.push('');
+  L.push('🏭 '+t('Слеплено, шт')+': '+nf(T.made)+' · '+t('Продано, шт')+': '+nf(T.sold)+' · '+t('В мусор, шт')+': '+nf(T.waste));
+  const rows=S.catalog.products.filter(p=>{const x=P[p.id];return x.made||x.ret||x.whs||x.waste||x.stock});
+  if(rows.length){L.push('');L.push('📦 '+t('Остатки готовых')+':');
+    for(const p of rows){const x=P[p.id];L.push('  • '+tn(p.name)+': '+nf(x.stock)+' '+t('шт')+(x.ret+x.whs?' ('+t('продано {0}',nf(x.ret+x.whs))+')':''))}}
+  if(T.debts.length){L.push('');L.push('🧾 '+t('Должны оплатить')+': '+money(T.debt));
+    for(const o of T.debts) L.push('  • '+(o.client||t('Клиент без имени'))+': '+money(o.amount));}
+  const low=lowList(I);
+  if(low.length){L.push('');L.push('⚠️ '+t('Заканчивается:')+' '+low.map(([i,n])=>tn(i.name)+' (~'+nf(n)+' '+t('шт')+')').join(', '))}
+  return L.join('\n');
+}
+async function shareReport(){
+  const text=reportText();
+  try{
+    if(navigator.share){await navigator.share({text});return}
+  }catch(e){if(e&&e.name==='AbortError')return}
+  try{await navigator.clipboard.writeText(text);toast(t('Отчёт скопирован — вставьте в WhatsApp или Telegram'))}
+  catch(e){S.reportShow=text;render()}
+}
 function quickForm(){
   if(!S.quick) return '';
   const out=S.quick==='out';
@@ -803,6 +847,8 @@ view.addEventListener('click',e=>{
   if('quick' in d){S.quick=d.quick||null;render();if(S.quick)setTimeout(()=>$('#qAmt')?.focus(),0);return}
   if(d.lang){S.catalog=readCatDom();return setLang(d.lang)}
   if(d.period){S.period=d.period;return render()}
+  if(d.act==='report') return shareReport();
+  if(d.act==='closeReport'){S.reportShow=null;return render()}
   if(d.go){S.type=d.go;S.tab='add';render();window.scrollTo(0,0);return}
   if(d.ftype){S.type=d.ftype;return render()}
   if(d.chan){if(S.channel!==d.chan){S.channel=d.chan;for(const k in S.lines)delete S.lines[k].price}return render()}
