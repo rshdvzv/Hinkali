@@ -1,8 +1,8 @@
 {
-  "name": "Цех хинкали",
-  "short_name": "Хинкали",
+  "name": "Xinkal sexi",
+  "short_name": "Xinkal",
   "description": "Учёт цеха хинкали: касса, заказы, закупки, лепка, остатки",
-  "lang": "ru",
+  "lang": "az",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

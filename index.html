@@ -1,17 +1,17 @@
 <!doctype html>
-<html lang="ru">
+<html lang="az">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Хинкали">
+<meta name="apple-mobile-web-app-title" content="Xinkal">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#141916">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
-<title>Цех хинкали</title>
+<title>Xinkal sexi</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
 <style>
 /* Layout: phone-first single column — cash card on top, sticky tabs, forms with a sticky total bar */
@@ -152,24 +152,24 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 .backup{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .filebtn{position:relative;overflow:hidden}
 .filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.hdr-r{display:flex;align-items:center;gap:10px}
+.langbtn{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 .8rem var(--f-body);padding:6px 10px;border-radius:8px;cursor:pointer}
 </style>
 </head>
 <body>
-
-
 <div class="wrap">
   <header class="top">
-    <h1>Цех хинкали</h1>
-    <span class="sub" id="status">Загрузка…</span>
+    <h1 id="appTitle">Xinkal sexi</h1>
+    <div class="hdr-r"><span class="sub" id="status"></span><button class="langbtn" id="langBtn" type="button">RU</button></div>
   </header>
   <nav class="tabs" role="tablist">
-    <button role="tab" data-tab="home" aria-selected="true">Касса</button>
-    <button role="tab" data-tab="add" aria-selected="false">+ Записать</button>
-    <button role="tab" data-tab="stock" aria-selected="false">Остатки</button>
-    <button role="tab" data-tab="log" aria-selected="false">Журнал</button>
-    <button role="tab" data-tab="cat" aria-selected="false">Настройки</button>
+    <button role="tab" data-tab="home" aria-selected="true"></button>
+    <button role="tab" data-tab="add" aria-selected="false"></button>
+    <button role="tab" data-tab="stock" aria-selected="false"></button>
+    <button role="tab" data-tab="log" aria-selected="false"></button>
+    <button role="tab" data-tab="cat" aria-selected="false"></button>
   </nav>
-  <noscript><div class="alert bad">Откройте приложение в Safari по ссылке — в предпросмотре файла оно не работает.</div></noscript>
+  <noscript><div class="alert bad">Tətbiqi Safari-də link ilə açın. / Откройте приложение в Safari по ссылке.</div></noscript>
   <main id="view"></main>
 </div>
 <div class="toast" id="toast" hidden></div>
@@ -179,18 +179,95 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const view = $('#view');
+
+/* ---------- язык / dil ---------- */
+const LANG_KEY='khinkali.lang';
+let LANG='az';
+try{LANG=localStorage.getItem(LANG_KEY)||'az'}catch(_){}
+const AZ={
+'Цех хинкали':'Xinkal sexi','Касса':'Kassa','+ Записать':'+ Yaz','Остатки':'Qalıqlar','Журнал':'Jurnal','Настройки':'Ayarlar',
+'В кассе сейчас':'Kassada indi','Клиенты должны ещё {0}':'Müştərilərin borcu: {0}','Долгов клиентов нет':'Müştəri borcu yoxdur',
+'+ Заказ':'+ Sifariş','Лепка':'Hazırlama','Закупка':'Alış','Расход':'Xərc','Заказ':'Sifariş','В мусор':'Zibilə',
+'Сегодня':'Bu gün','Вчера':'Dünən','7 дней':'7 gün','Месяц':'Ay','Всё время':'Bütün dövr','Даты…':'Tarixlər…','С':'Başlanğıc','По':'Son',
+'Выручка · {0}':'Gəlir · {0} sifariş','Закупки в маркете':'Marketdən alış','Другие расходы':'Digər xərclər','В плюсе':'Mənfəətdə','В минусе':'Zərərdə',
+'NOTE_RESULT':'«Mənfəət / zərər» — dövr ərzində daxil olan puldan xərclənən pul çıxılır. Ehtiyat üçün alış etmisinizsə, bu gün zərər görünə bilər, amma ərzaq anbardadır. Maya dəyərinə görə mənfəət (satılan xinkaldan real qazanc): {0}.',
+'Продажи за период':'Dövr üzrə satış','Заказов':'Sifariş','штучно {0} · опт {1}':'ədədlə {0} · topdan {1}','Продано, шт':'Satılıb, əd.','Средний чек':'Orta çek','опт {0} всего':'topdan cəmi {0}',
+'Слеплено, шт':'Hazırlanıb, əd.','за период':'dövr ərzində','В мусор, шт':'Zibilə, əd.','{0}% · убыток {1}':'{0}% · zərər {1}',
+'Вид':'Növ','Слеплено':'Hazırlanıb','Штучно':'Ədədlə','Опт':'Topdan','Мусор':'Zibil','Выручка':'Gəlir','Ср. цена':'Orta qiymət',
+'Куда ушли деньги':'Pul hara getdi','Продукты (маркет)':'Ərzaq (market)','Должны оплатить':'Ödənilməli','Клиент без имени':'Adsız müştəri','Оплатили':'Ödənildi',
+'ONBOARD':'Haradan başlamaq: «+ Yaz» → «Kassa» basın və hazırda əlinizdə olan pulu kassaya qoyun. Sonra alışları, hazırlamanı və sifarişləri yazın. Qiymətləri və reseptləri «Ayarlar»da dəyişə bilərsiniz.',
+'Нет видов хинкали. Добавьте их в «Настройках».':'Xinkal növü yoxdur. «Ayarlar»da əlavə edin.',
+'Дата':'Tarix','Оптом':'Topdan','цена ₼/шт':'qiymət ₼/əd.','Клиент':'Müştəri','Клиент (необязательно)':'Müştəri (vacib deyil)','Кафе, магазин…':'Kafe, mağaza…','Можно оставить пустым':'Boş qala bilər',
+'Оплачено сразу':'Dərhal ödənildi','В долг':'Borca','Сумма заказа':'Sifariş məbləği','Записать заказ':'Sifarişi yaz',
+'Укажите, сколько слепили. Сырьё спишется само по рецептуре.':'Neçə ədəd hazırlandığını yazın. Ərzaq reseptə görə özü silinəcək.',
+'Всего слеплено':'Cəmi hazırlanıb','Хинкали готовы':'Xinkal hazırdır','Спишется:':'Silinəcək:',
+'Отметьте, что купили. Цена запомнится на следующий раз.':'Nə aldığınızı qeyd edin. Qiymət növbəti dəfə üçün yadda qalacaq.',
+'Сколько, {0}':'Miqdar, {0}','Цена за {0}, ₼':'{0} qiyməti, ₼','Потрачено в маркете':'Marketdə xərclənib','Записать закупку':'Alışı yaz','{0} поз.':'{0} mövqe',
+'На что':'Nəyə','Сумма, ₼':'Məbləğ, ₼','Комментарий (необязательно)':'Şərh (vacib deyil)','Например: аренда за октябрь':'Məsələn: oktyabr icarəsi','Записать расход':'Xərci yaz',
+'Готовые хинкали':'Hazır xinkal','Продукты':'Ərzaq','Что выбросили':'Nə atıldı','Сколько':'Miqdar','Сколько, шт':'Miqdar, əd.','Причина':'Səbəb','Записать в убыток':'Zərər kimi yaz',
+'Положить в кассу':'Kassaya qoy','Забрать из кассы':'Kassadan götür','Комментарий':'Şərh','Например: забрал себе':'Məsələn: özümə götürdüm','Например: начальный остаток':'Məsələn: başlanğıc qalıq',
+'NOTE_CASH':'Burada yalnız satış və alışla bağlı olmayan pul hərəkəti: başlanğıc məbləğ, öz pulunuzu qoydunuz, özünüzə götürdünüz.',
+'Забрать':'Götür','Положить':'Qoy','шт':'əd.',
+'Осталось':'Qalıb','Себест./шт':'Maya dəyəri/əd.','Цена штучно':'Ədədlə qiymət',
+'Себестоимость — по рецептуре и средней цене, по которой вы покупали продукты.':'Maya dəyəri — reseptə və ərzağı aldığınız orta qiymətə görə.',
+'Продукты на складе':'Anbarda ərzaq','Продукт':'Ərzaq','Хватит на':'Çatar','нет':'yoxdur','~{0} шт':'~{0} əd.',
+'NOTE_STOCK':'Qırmızı mənfi o deməkdir ki, alışda yazılandan çox hazırlanıb — bütün alışların yazıldığını yoxlayın. «Çatar» — təxminən, ən çox ərzaq gedən növə görə.',
+'Записей пока нет. Нажмите «+ Записать».':'Hələ qeyd yoxdur. «+ Yaz» basın.','выручка {0}':'gəlir {0}','в долг':'borca','удалить':'sil','Точно удалить?':'Silinsin?',
+'Забрали из кассы':'Kassadan götürüldü','Положили в кассу':'Kassaya qoyuldu',
+'Виды хинкали и цены':'Xinkal növləri və qiymətlər','Название':'Ad','Штучно, ₼':'Ədədlə, ₼','Опт, ₼/шт':'Topdan, ₼/əd.','Убрать':'Sil','+ Вид хинкали':'+ Xinkal növü',
+'Продукты и цены':'Ərzaq və qiymətlər','Цена обновляется сама после каждой закупки.':'Qiymət hər alışdan sonra özü yenilənir.','Ед.':'Vahid','Цена, ₼':'Qiymət, ₼','Раздел':'Bölmə','+ Продукт':'+ Ərzaq',
+'Рецептура на 100 штук':'100 ədəd üçün resept','Сколько продуктов уходит на 100 хинкали. Пустое поле — продукт не нужен.':'100 xinkala nə qədər ərzaq gedir. Boş xana — bu ərzaq lazım deyil.',
+'Сохранить настройки':'Ayarları yadda saxla','Язык':'Dil',
+'Резервная копия':'Ehtiyat nüsxə',
+'NOTE_BACKUP':'Bütün qeydlər yalnız bu telefonda saxlanılır. Həftədə bir dəfə nüsxəni «Fayllar», Telegram və ya WhatsApp-a saxlayın — telefon itsə və ya xarab olsa, uçotu yeni telefonda bərpa etmək olar.',
+'Последняя копия: сегодня.':'Son nüsxə: bu gün.','Последняя копия: {0} дн. назад.':'Son nüsxə: {0} gün əvvəl.','Копию ещё не делали.':'Hələ nüsxə çıxarılmayıb.',
+'Сохранить копию':'Nüsxəni saxla','Восстановить из копии':'Nüsxədən bərpa et',
+'RESTORE_Q':'Nüsxədə {0} tarixli {1} qeyd var. Telefondakı indiki məlumatlar ({2} qeyd) əvəz olunacaq.','Заменить':'Əvəz et','Отмена':'Ləğv et',
+'Добавьте хотя бы одну позицию':'Ən azı bir mövqe əlavə edin','Для долга укажите клиента':'Borc üçün müştərini yazın','Укажите количество':'Miqdarı yazın',
+'Укажите, сколько купили':'Nə qədər aldığınızı yazın','Укажите сумму':'Məbləği yazın','Заказ записан: {0}':'Sifariş yazıldı: {0}','Слеплено {0} шт':'Hazırlandı: {0} əd.',
+'Закупка записана: {0}':'Alış yazıldı: {0}','Расход записан':'Xərc yazıldı','Записано в убыток':'Zərər kimi yazıldı','Деньги забраны из кассы':'Pul kassadan götürüldü','Деньги в кассе':'Pul kassadadır',
+'Запись удалена':'Qeyd silindi','Оплата записана — деньги в кассе':'Ödəniş yazıldı — pul kassadadır','Настройки сохранены':'Ayarlar yadda saxlanıldı',
+'Копия сохранена':'Nüsxə saxlanıldı','Не получилось сохранить копию':'Nüsxəni saxlamaq alınmadı','Это не файл копии учёта хинкали':'Bu, xinkal uçotunun nüsxə faylı deyil','Данные восстановлены':'Məlumatlar bərpa edildi',
+'Память телефона не сохранила данные. Сделайте резервную копию.':'Telefon yaddaşı məlumatı saxlamadı. Ehtiyat nüsxə çıxarın.',
+'Данные хранятся в этом телефоне':'Məlumatlar bu telefonda saxlanılır','Память недоступна — откройте в Safari':'Yaddaş əlçatan deyil — Safari-də açın',
+'Новый вид':'Yeni növ','Новый продукт':'Yeni ərzaq','Без названия':'Adsız','(удалённый вид)':'(silinmiş növ)','(удалённое сырьё)':'(silinmiş ərzaq)',
+/* категории, причины, разделы, единицы */
+'Аренда':'İcarə','Зарплата':'Maaş','Газ, свет, вода':'Qaz, işıq, su','Транспорт и доставка':'Nəqliyyat və çatdırılma','Упаковка и хозтовары':'Qablaşdırma və təsərrüfat malları','Оборудование и ремонт':'Avadanlıq və təmir','Другое':'Digər',
+'Брак (порвались, слиплись)':'Brak (cırılıb, yapışıb)','Просрочка':'Vaxtı keçib','Не продали вовремя':'Vaxtında satılmayıb','Упало / испортилось':'Düşüb / xarab olub',
+'Тесто':'Xəmir','Мясо':'Ət','Сыр и молочное':'Pendir və süd məhsulları','Овощи и зелень':'Tərəvəz və göyərti','Специи':'Ədviyyat','Прочее':'Digər','Упаковка':'Qablaşdırma',
+'кг':'kq','л':'l','пучок':'dəstə','уп':'paket',
+/* стандартные названия */
+'Хинкали с говядиной':'Mal ətli xinkal','Хинкали с бараниной':'Qoyun ətli xinkal','Хинкали мясные (говядина + баранина)':'Ətli xinkal (mal + qoyun)',
+'Хинкали с сыром':'Pendirli xinkal','Хинкали с грибами':'Göbələkli xinkal','Хинкали с картофелем':'Kartoflu xinkal',
+'Мука высший сорт':'Un (əla növ)','Соль':'Duz','Говядина':'Mal əti','Баранина':'Qoyun əti','Сыр сулугуни':'Sulquni pendiri','Сыр имеретинский':'İmereti pendiri',
+'Масло сливочное':'Kərə yağı','Лук репчатый':'Soğan','Чеснок':'Sarımsaq','Картофель':'Kartof','Шампиньоны':'Göbələk (şampinyon)','Кинза':'Kişniş','Петрушка':'Cəfəri',
+'Перец чёрный молотый':'Qara istiot (üyüdülmüş)','Перец красный молотый':'Qırmızı istiot (üyüdülmüş)','Зира':'Zirə','Чабер':'Çabər','Хмели-сунели':'Xmeli-suneli',
+'Масло растительное':'Bitki yağı','Пакеты для заморозки':'Dondurma üçün paketlər','Лотки / контейнеры':'Qablar / konteynerlər','Перчатки':'Əlcək'
+};
+const RU_FIX={'NOTE_RESULT':'«В плюсе / в минусе» — сколько пришло минус сколько потратили за период. Если закупили впрок, сегодня может быть минус, а продукты лежат на складе. Прибыль по себестоимости (сколько реально заработали на проданных хинкали): {0}.',
+'ONBOARD':'С чего начать: нажмите «+ Записать» → «Касса» и положите сумму, которая сейчас на руках. Потом записывайте закупки, лепку и заказы. Цены и рецептуры можно поправить в «Настройках».',
+'NOTE_CASH':'Здесь — только движение денег без продажи и покупки: стартовая сумма, вложили свои, забрали себе.',
+'NOTE_STOCK':'Красный минус значит, что слепили больше, чем записано в закупках — проверьте, всё ли купленное внесли. «Хватит на» — примерно, по самому «прожорливому» виду.',
+'NOTE_BACKUP':'Все записи хранятся только в этом телефоне. Раз в неделю сохраняйте копию в «Файлы», Telegram или WhatsApp — если телефон потеряется или сломается, учёт можно будет восстановить на новом.',
+'RESTORE_Q':'В копии {1} записей от {0}. Текущие данные на телефоне ({2} записей) будут заменены.',
+'Выручка · {0}':'Выручка · {0} заказ{E}'};
+function t(s,...a){
+  let r = LANG==='az' ? (AZ[s] ?? s) : (RU_FIX[s] ?? s);
+  if(LANG!=='az'&&s==='Выручка · {0}') r=r.replace('{E}',ending(+a[0]||0));
+  return a.length?r.replace(/\{(\d)\}/g,(m,i)=>a[i]??''):r;
+}
+const tn=s=>t(s); // перевод названий из справочника (если совпадает со стандартным)
+
 const S = {
-  tab:'home', db:null, canWrite:true,
-  catalog:{products:[],ingredients:[],recipes:{}},
+  tab:'home', catalog:{products:[],ingredients:[],recipes:{}},
   ops:[], period:'today', from:'', to:'',
   type:'order', channel:'retail', paid:true, wkind:'product', cashDir:'in',
-  buy:{}, lines:{}, make:{}, date:'',
-  confirmDel:null, recProd:null, busy:false
+  buy:{}, lines:{}, make:{}, date:'', confirmDel:null, recProd:null, busy:false
 };
-const OP_COL='ops', CAT_DOC='catalog/main';
 const GROUPS=['Тесто','Мясо','Сыр и молочное','Овощи и зелень','Специи','Прочее','Упаковка'];
 const EXP_CATS=['Аренда','Зарплата','Газ, свет, вода','Транспорт и доставка','Упаковка и хозтовары','Оборудование и ремонт','Другое'];
 const WASTE_R=['Брак (порвались, слиплись)','Просрочка','Не продали вовремя','Упало / испортилось','Другое'];
+const UNITS=['кг','л','шт','пучок','уп'];
 
 /* ---------- helpers ---------- */
 const pad=n=>String(n).padStart(2,'0');
@@ -205,21 +282,22 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const uid=()=>Math.random().toString(36).slice(2,9);
 const prod=id=>S.catalog.products.find(p=>p.id===id);
 const ing=id=>S.catalog.ingredients.find(i=>i.id===id);
-const pName=id=>prod(id)?.name||'(удалённый вид)';
-const iName=id=>ing(id)?.name||'(удалённое сырьё)';
-const iUnit=id=>ing(id)?.unit||'';
-const dLabel=s=>{const t=today();if(s===t)return 'Сегодня';const y=new Date();y.setDate(y.getDate()-1);if(s===iso(y))return 'Вчера';const [Y,M,D]=s.split('-');return D+'.'+M+'.'+Y};
-function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2400)}
+const pName=id=>prod(id)?tn(prod(id).name):t('(удалённый вид)');
+const iName=id=>ing(id)?tn(ing(id).name):t('(удалённое сырьё)');
+const iUnit=id=>ing(id)?t(ing(id).unit):'';
+const ending=n=>{n=Math.abs(n)%100;const n1=n%10;if(n>10&&n<20)return 'ов';if(n1===1)return '';if(n1>=2&&n1<=4)return 'а';return 'ов'};
+const dLabel=s=>{const tt=today();if(s===tt)return t('Сегодня');const y=new Date();y.setDate(y.getDate()-1);if(s===iso(y))return t('Вчера');const [Y,M,D]=s.split('-');return D+'.'+M+'.'+Y};
+function toast(msg){const el=$('#toast');el.textContent=msg;el.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>el.hidden=true,2400)}
 const orderLines=o=>o.type==='order'?(o.lines||[]):o.type==='sale'?[{item:o.item,qty:o.qty,price:o.price}]:[];
 const isOrder=o=>o.type==='order'||o.type==='sale';
 const orderPaid=o=>o.type==='sale'?true:o.paid!==false;
 
 function periodRange(){
-  const t=today();
-  if(S.period==='today') return [t,t];
+  const tt=today();
+  if(S.period==='today') return [tt,tt];
   if(S.period==='yest'){const d=new Date();d.setDate(d.getDate()-1);const y=iso(d);return [y,y]}
-  if(S.period==='week'){const d=new Date();d.setDate(d.getDate()-6);return [iso(d),t]}
-  if(S.period==='month') return [t.slice(0,8)+'01',t];
+  if(S.period==='week'){const d=new Date();d.setDate(d.getDate()-6);return [iso(d),tt]}
+  if(S.period==='month') return [tt.slice(0,8)+'01',tt];
   if(S.period==='custom') return [S.from||'0000-01-01',S.to||'9999-12-31'];
   return ['0000-01-01','9999-12-31'];
 }
@@ -238,7 +316,7 @@ function calc(){
   const eI=id=>I[id]||(I[id]={bought:0,spent:0,used:0,wasted:0,stock:0});
   C.products.forEach(p=>eP(p.id)); C.ingredients.forEach(i=>eI(i.id));
   const T={orders:0,ordersR:0,ordersW:0,rev:0,revR:0,revW:0,sold:0,soldR:0,soldW:0,made:0,waste:0,
-    buy:0,exp:0,expCat:{},cogs:0,wasteCost:0,cashNow:0,debt:0,debts:[],cashIn:0,cashOut:0};
+    buy:0,exp:0,expCat:{},cogs:0,wasteCost:0,cashNow:0,debt:0,debts:[]};
   for(const o of S.ops){
     const p=inP(o.date), q=+o.qty||0;
     if(o.type==='purchase'){const x=eI(o.item);x.stock+=q;T.cashNow-=+o.amount||0;if(p){x.bought+=q;x.spent+=+o.amount||0;T.buy+=+o.amount||0}}
@@ -257,7 +335,7 @@ function calc(){
       if(o.kind==='ingredient'){const y=eI(o.item);y.stock-=q;if(p){y.wasted+=q;T.wasteCost+=q*(avg[o.item]||0)}}
       else{const x=eP(o.item);x.stock-=q;if(p){x.waste+=q;T.waste+=q;T.wasteCost+=q*(pc[o.item]||0)}}}
     else if(o.type==='expense'){T.cashNow-=+o.amount||0;if(p){T.exp+=+o.amount||0;T.expCat[o.category]=(T.expCat[o.category]||0)+(+o.amount||0)}}
-    else if(o.type==='cash'){const v=+o.amount||0;if(o.dir==='out'){T.cashNow-=v;if(p)T.cashOut+=v}else{T.cashNow+=v;if(p)T.cashIn+=v}}
+    else if(o.type==='cash'){const v=+o.amount||0;T.cashNow+=o.dir==='out'?-v:v}
   }
   T.result=T.rev-T.buy-T.exp;
   T.profitCost=T.rev-T.cogs-T.wasteCost-T.exp;
@@ -265,231 +343,233 @@ function calc(){
 }
 
 /* ---------- render ---------- */
+function chrome(){
+  document.documentElement.lang=LANG;
+  document.title=t('Цех хинкали');
+  $('#appTitle').textContent=t('Цех хинкали');
+  $('#langBtn').textContent=LANG==='az'?'RU':'AZ';
+  $('#langBtn').setAttribute('aria-label',LANG==='az'?'Русский язык':'Azərbaycan dili');
+  const names={home:'Касса',add:'+ Записать',stock:'Остатки',log:'Журнал',cat:'Настройки'};
+  $$('nav.tabs button').forEach(b=>{b.textContent=t(names[b.dataset.tab]);b.setAttribute('aria-selected',b.dataset.tab===S.tab)});
+  $('#status').textContent=storageOk?t('Данные хранятся в этом телефоне'):t('Память недоступна — откройте в Safari');
+}
 function render(){
-  $$('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===S.tab));
+  chrome();
   view.innerHTML = ({home:vHome,add:vAdd,stock:vStock,log:vLog,cat:vCat})[S.tab]();
   if(S.tab==='add') refreshTotals();
 }
 
 function periodChips(){
   const per=[['today','Сегодня'],['yest','Вчера'],['week','7 дней'],['month','Месяц'],['all','Всё время'],['custom','Даты…']];
-  let h=`<div class="chips">${per.map(([k,l])=>`<button class="chip" data-period="${k}" aria-pressed="${S.period===k}">${l}</button>`).join('')}</div>`;
-  if(S.period==='custom') h+=`<div class="range"><label class="f">С<input type="date" id="pFrom" value="${S.from}"></label><label class="f">По<input type="date" id="pTo" value="${S.to}"></label></div>`;
+  let h=`<div class="chips">${per.map(([k,l])=>`<button class="chip" data-period="${k}" aria-pressed="${S.period===k}">${t(l)}</button>`).join('')}</div>`;
+  if(S.period==='custom') h+=`<div class="range"><label class="f">${t('С')}<input type="date" id="pFrom" value="${S.from}"></label><label class="f">${t('По')}<input type="date" id="pTo" value="${S.to}"></label></div>`;
   return h;
 }
 
 function vHome(){
   const {P,T}=calc();
-  const hasEx=S.ops.some(o=>o.example);
   let h='';
-  if(!S.ops.length) h+=`<div class="alert">С чего начать: нажмите «+ Записать» → «Касса» и положите сумму, которая сейчас на руках. Потом записывайте закупки, лепку и заказы. Цены и рецептуры можно поправить в «Настройках».</div>`;
-  if(hasEx) h+=`<div class="alert">Сейчас в программе примерные записи, чтобы было видно, как всё считается. Когда начнёте работать по-настоящему — <button class="x" data-act="clearEx">удалить примеры</button>.</div>`;
-  h+=`<div class="cash"><span class="l">В кассе сейчас</span><span class="v">${money(T.cashNow)}</span>
-    <span class="d">${T.debt?`Клиенты должны ещё ${money(T.debt)}`:'Долгов клиентов нет'}</span></div>
+  if(!S.ops.length) h+=`<div class="alert">${t('ONBOARD')}</div>`;
+  h+=`<div class="cash"><span class="l">${t('В кассе сейчас')}</span><span class="v">${money(T.cashNow)}</span>
+    <span class="d">${T.debt?t('Клиенты должны ещё {0}',money(T.debt)):t('Долгов клиентов нет')}</span></div>
   <div class="quick">
-    <button class="main" data-go="order">+ Заказ</button>
-    <button data-go="production">Лепка</button>
-    <button data-go="purchase">Закупка</button>
-    <button data-go="expense">Расход</button>
+    <button class="main" data-go="order">${t('+ Заказ')}</button>
+    <button data-go="production">${t('Лепка')}</button>
+    <button data-go="purchase">${t('Закупка')}</button>
+    <button data-go="expense">${t('Расход')}</button>
   </div>`;
   h+=periodChips();
   const res=T.result;
   h+=`<div class="result">
-    <div class="ln"><span>Выручка · ${nf(T.orders)} заказ${ending(T.orders)}</span><span class="plus">${sign(T.rev)}</span></div>
-    <div class="ln"><span>Закупки в маркете</span><span class="minus">${T.buy?sign(-T.buy):'0,00 ₼'}</span></div>
-    <div class="ln"><span>Другие расходы</span><span class="minus">${T.exp?sign(-T.exp):'0,00 ₼'}</span></div>
-    <div class="ln tot"><span>${res>=0?'В плюсе':'В минусе'}</span><span class="${res>=0?'plus':'minus'}">${sign(res)}</span></div>
+    <div class="ln"><span>${t('Выручка · {0}',nf(T.orders))}</span><span class="plus">${sign(T.rev)}</span></div>
+    <div class="ln"><span>${t('Закупки в маркете')}</span><span class="minus">${T.buy?sign(-T.buy):'0,00 ₼'}</span></div>
+    <div class="ln"><span>${t('Другие расходы')}</span><span class="minus">${T.exp?sign(-T.exp):'0,00 ₼'}</span></div>
+    <div class="ln tot"><span>${res>=0?t('В плюсе'):t('В минусе')}</span><span class="${res>=0?'plus':'minus'}">${sign(res)}</span></div>
   </div>
-  <p class="note">«В плюсе / в минусе» — сколько пришло минус сколько потратили за период. Если закупили впрок, сегодня может быть минус, а продукты лежат на складе. Прибыль по себестоимости (сколько реально заработали на проданных хинкали): <b class="${T.profitCost>=0?'plus':'minus'}">${sign(T.profitCost)}</b>.</p>`;
+  <p class="note">${t('NOTE_RESULT',`<b class="${T.profitCost>=0?'plus':'minus'}">${sign(T.profitCost)}</b>`)}</p>`;
   const avgCheck=T.orders?T.rev/T.orders:0, ws=T.made?T.waste/T.made*100:0;
-  h+=`<h2>Продажи за период</h2><div class="kpis">
-    <div class="kpi"><span class="l">Заказов</span><span class="v">${nf(T.orders)}</span><span class="d">штучно ${T.ordersR} · опт ${T.ordersW}</span></div>
-    <div class="kpi"><span class="l">Продано, шт</span><span class="v">${nf(T.sold)}</span><span class="d">штучно ${nf(T.soldR)} · опт ${nf(T.soldW)}</span></div>
-    <div class="kpi"><span class="l">Средний чек</span><span class="v">${money(avgCheck)}</span><span class="d">опт ${money(T.revW)} всего</span></div>
-    <div class="kpi"><span class="l">Слеплено, шт</span><span class="v">${nf(T.made)}</span><span class="d">за период</span></div>
-    <div class="kpi"><span class="l">В мусор, шт</span><span class="v ${ws>5?'minus':''}">${nf(T.waste)}</span><span class="d">${nf(ws,1)}% · убыток ${money(T.wasteCost)}</span></div>
+  h+=`<h2>${t('Продажи за период')}</h2><div class="kpis">
+    <div class="kpi"><span class="l">${t('Заказов')}</span><span class="v">${nf(T.orders)}</span><span class="d">${t('штучно {0} · опт {1}',T.ordersR,T.ordersW)}</span></div>
+    <div class="kpi"><span class="l">${t('Продано, шт')}</span><span class="v">${nf(T.sold)}</span><span class="d">${t('штучно {0} · опт {1}',nf(T.soldR),nf(T.soldW))}</span></div>
+    <div class="kpi"><span class="l">${t('Средний чек')}</span><span class="v">${money(avgCheck)}</span><span class="d">${t('опт {0} всего',money(T.revW))}</span></div>
+    <div class="kpi"><span class="l">${t('Слеплено, шт')}</span><span class="v">${nf(T.made)}</span><span class="d">${t('за период')}</span></div>
+    <div class="kpi"><span class="l">${t('В мусор, шт')}</span><span class="v ${ws>5?'minus':''}">${nf(T.waste)}</span><span class="d">${t('{0}% · убыток {1}',nf(ws,1),money(T.wasteCost))}</span></div>
   </div>`;
   const rows=S.catalog.products.map(p=>[p,P[p.id]]).filter(([,x])=>x.made||x.ret||x.whs||x.waste);
   if(rows.length){
-    h+=`<div class="tbl"><table><thead><tr><th>Вид</th><th>Слеплено</th><th>Штучно</th><th>Опт</th><th>Мусор</th><th>Выручка</th><th>Ср. цена</th></tr></thead><tbody>`;
-    for(const [p,x] of rows){const s=x.ret+x.whs;h+=`<tr><td>${esc(p.name)}</td><td class="n">${nf(x.made)}</td><td class="n">${nf(x.ret)}</td><td class="n">${nf(x.whs)}</td><td class="n">${x.waste?`<span class="pill bad">${nf(x.waste)}</span>`:'0'}</td><td class="n">${money(x.rev)}</td><td class="n">${s?money(x.rev/s):'—'}</td></tr>`}
+    h+=`<div class="tbl"><table><thead><tr><th>${t('Вид')}</th><th>${t('Слеплено')}</th><th>${t('Штучно')}</th><th>${t('Опт')}</th><th>${t('Мусор')}</th><th>${t('Выручка')}</th><th>${t('Ср. цена')}</th></tr></thead><tbody>`;
+    for(const [p,x] of rows){const s=x.ret+x.whs;h+=`<tr><td>${esc(tn(p.name))}</td><td class="n">${nf(x.made)}</td><td class="n">${nf(x.ret)}</td><td class="n">${nf(x.whs)}</td><td class="n">${x.waste?`<span class="pill bad">${nf(x.waste)}</span>`:'0'}</td><td class="n">${money(x.rev)}</td><td class="n">${s?money(x.rev/s):'—'}</td></tr>`}
     h+=`</tbody></table></div>`;
   }
   const ec=Object.entries(T.expCat);
   if(ec.length||T.buy){
-    h+=`<h2>Куда ушли деньги</h2><div class="result">${T.buy?`<div class="ln"><span>Продукты (маркет)</span><span>${money(T.buy)}</span></div>`:''}${ec.map(([k,v])=>`<div class="ln"><span>${esc(k)}</span><span>${money(v)}</span></div>`).join('')}</div>`;
+    h+=`<h2>${t('Куда ушли деньги')}</h2><div class="result">${T.buy?`<div class="ln"><span>${t('Продукты (маркет)')}</span><span>${money(T.buy)}</span></div>`:''}${ec.map(([k,v])=>`<div class="ln"><span>${esc(t(k))}</span><span>${money(v)}</span></div>`).join('')}</div>`;
   }
   if(T.debts.length){
-    h+=`<h2>Должны оплатить</h2>`;
-    for(const o of T.debts.sort((x,y)=>x.date<y.date?-1:1)) h+=`<div class="debt"><div><b>${esc(o.client||'Клиент без имени')}</b><small>${dLabel(o.date)} · ${orderLines(o).map(l=>nf(l.qty)+' шт').join(', ')}</small></div><div style="display:flex;gap:8px;align-items:center"><b style="font-family:var(--f-num)">${money(o.amount)}</b><button class="btn sm" data-paid="${o.id}">Оплатили</button></div></div>`;
+    h+=`<h2>${t('Должны оплатить')}</h2>`;
+    for(const o of T.debts.sort((x,y)=>x.date<y.date?-1:1)) h+=`<div class="debt"><div><b>${esc(o.client||t('Клиент без имени'))}</b><small>${dLabel(o.date)} · ${orderLines(o).map(l=>nf(l.qty)+' '+t('шт')).join(', ')}</small></div><div style="display:flex;gap:8px;align-items:center"><b style="font-family:var(--f-num)">${money(o.amount)}</b><button class="btn sm" data-paid="${o.id}">${t('Оплатили')}</button></div></div>`;
   }
   return h;
 }
-const ending=n=>{n=Math.abs(n)%100;const n1=n%10;if(n>10&&n<20)return 'ов';if(n1===1)return '';if(n1>=2&&n1<=4)return 'а';return 'ов'};
 
 /* ----- add forms ----- */
 function vAdd(){
   const C=S.catalog;
-  if(!C.products.length) return `<div class="empty">Нет видов хинкали. Добавьте их в «Настройках».</div>`;
-  const T=[['order','Заказ'],['production','Лепка'],['purchase','Закупка'],['expense','Расход'],['waste','В мусор'],['cash','Касса']];
-  let h=`<div class="types">${T.map(([k,l])=>`<button data-ftype="${k}" aria-pressed="${S.type===k}">${l}</button>`).join('')}</div>`;
-  h+=`<form id="opForm" class="form"><label class="f">Дата<input type="date" id="fDate" value="${S.date||today()}"></label>`;
-  if(S.type==='order') h+=fOrder();
-  else if(S.type==='production') h+=fProd();
-  else if(S.type==='purchase') h+=fBuy();
-  else if(S.type==='expense') h+=fExp();
-  else if(S.type==='waste') h+=fWaste();
-  else h+=fCash();
+  if(!C.products.length) return `<div class="empty">${t('Нет видов хинкали. Добавьте их в «Настройках».')}</div>`;
+  const TT=[['order','Заказ'],['production','Лепка'],['purchase','Закупка'],['expense','Расход'],['waste','В мусор'],['cash','Касса']];
+  let h=`<div class="types">${TT.map(([k,l])=>`<button data-ftype="${k}" aria-pressed="${S.type===k}">${t(l)}</button>`).join('')}</div>`;
+  h+=`<form id="opForm" class="form"><label class="f">${t('Дата')}<input type="date" id="fDate" value="${S.date||today()}"></label>`;
+  h+=({order:fOrder,production:fProd,purchase:fBuy,expense:fExp,waste:fWaste,cash:fCash})[S.type]();
   h+=`</form>`;
   return h;
 }
 function fOrder(){
   const w=S.channel==='wholesale';
-  let h=`<div class="seg"><button type="button" data-chan="retail" aria-pressed="${!w}">Штучно</button><button type="button" data-chan="wholesale" aria-pressed="${w}">Оптом</button></div>`;
+  let h=`<div class="seg"><button type="button" data-chan="retail" aria-pressed="${!w}">${t('Штучно')}</button><button type="button" data-chan="wholesale" aria-pressed="${w}">${t('Оптом')}</button></div>`;
   for(const p of S.catalog.products){
     const l=S.lines[p.id]||{}; const price=l.price??(w?p.wholesale:p.retail); const q=+l.qty||0;
-    h+=`<div class="pl ${q?'on':''}" id="pl-${p.id}"><div class="nm">${esc(p.name)}<div class="pr">цена ₼/шт <input type="number" step="any" min="0" inputmode="decimal" data-lprice="${p.id}" value="${price}"></div></div>
+    h+=`<div class="pl ${q?'on':''}" id="pl-${p.id}"><div class="nm">${esc(tn(p.name))}<div class="pr">${t('цена ₼/шт')} <input type="number" step="any" min="0" inputmode="decimal" data-lprice="${p.id}" value="${price}"></div></div>
     <div class="step"><button type="button" data-step="${p.id}" data-d="-1">−</button><input type="number" min="0" step="1" inputmode="numeric" data-lqty="${p.id}" value="${q||''}" placeholder="0"><button type="button" data-step="${p.id}" data-d="1">+</button></div></div>`;
   }
-  h+=`<label class="f">Клиент ${w?'':'(необязательно)'}<input type="text" id="fClient" value="${esc(S.client||'')}" placeholder="${w?'Кафе, магазин…':'Можно оставить пустым'}"></label>
-  <div class="seg"><button type="button" data-paidsel="1" aria-pressed="${S.paid}">Оплачено сразу</button><button type="button" data-paidsel="0" aria-pressed="${!S.paid}">В долг</button></div>
-  <div class="bar"><div class="t">Сумма заказа<b id="tot">0 ₼</b></div><button class="btn" type="submit" id="go">Записать заказ</button></div>`;
+  h+=`<label class="f">${w?t('Клиент'):t('Клиент (необязательно)')}<input type="text" id="fClient" value="${esc(S.client||'')}" placeholder="${w?t('Кафе, магазин…'):t('Можно оставить пустым')}"></label>
+  <div class="seg"><button type="button" data-paidsel="1" aria-pressed="${S.paid}">${t('Оплачено сразу')}</button><button type="button" data-paidsel="0" aria-pressed="${!S.paid}">${t('В долг')}</button></div>
+  <div class="bar"><div class="t">${t('Сумма заказа')}<b id="tot">0 ₼</b></div><button class="btn" type="submit" id="go">${t('Записать заказ')}</button></div>`;
   return h;
 }
 function fProd(){
-  let h=`<p class="note" style="margin:0">Укажите, сколько слепили. Сырьё спишется само по рецептуре.</p>`;
+  let h=`<p class="note" style="margin:0">${t('Укажите, сколько слепили. Сырьё спишется само по рецептуре.')}</p>`;
   for(const p of S.catalog.products){const q=+S.make[p.id]||0;
-    h+=`<div class="pl ${q?'on':''}" id="pm-${p.id}"><div class="nm">${esc(p.name)}</div><div class="step"><button type="button" data-mstep="${p.id}" data-d="-10">−</button><input type="number" min="0" step="1" inputmode="numeric" data-mqty="${p.id}" value="${q||''}" placeholder="0"><button type="button" data-mstep="${p.id}" data-d="10">+</button></div></div>`}
-  h+=`<div class="preview" id="preview" hidden></div><div class="bar"><div class="t">Всего слеплено<b id="tot">0 шт</b></div><button class="btn" type="submit" id="go">Хинкали готовы</button></div>`;
+    h+=`<div class="pl ${q?'on':''}" id="pm-${p.id}"><div class="nm">${esc(tn(p.name))}</div><div class="step"><button type="button" data-mstep="${p.id}" data-d="-10">−</button><input type="number" min="0" step="1" inputmode="numeric" data-mqty="${p.id}" value="${q||''}" placeholder="0"><button type="button" data-mstep="${p.id}" data-d="10">+</button></div></div>`}
+  h+=`<div class="preview" id="preview" hidden></div><div class="bar"><div class="t">${t('Всего слеплено')}<b id="tot">0 ${t('шт')}</b></div><button class="btn" type="submit" id="go">${t('Хинкали готовы')}</button></div>`;
   return h;
 }
 function fBuy(){
-  let h=`<p class="note" style="margin:0">Отметьте, что купили. Цена запомнится на следующий раз.</p>`;
+  let h=`<p class="note" style="margin:0">${t('Отметьте, что купили. Цена запомнится на следующий раз.')}</p>`;
   const ings=S.catalog.ingredients;
-  for(const g of [...GROUPS,...new Set(ings.map(i=>i.group).filter(x=>!GROUPS.includes(x)))]){
+  for(const g of [...GROUPS,...new Set(ings.map(i=>i.group).filter(x=>x&&!GROUPS.includes(x)))]){
     const list=ings.filter(i=>(i.group||'Прочее')===g); if(!list.length) continue;
-    h+=`<div class="grp">${esc(g)}</div>`;
-    for(const i of list){const b=S.buy[i.id];const on=!!b;
-      h+=`<div class="item ${on?'on':''}"><div class="hd" data-buyon="${i.id}"><input type="checkbox" tabindex="-1" ${on?'checked':''} aria-label="${esc(i.name)}"><span class="nm">${esc(i.name)}</span><span class="lp">${i.price?money(i.price)+'/'+i.unit:''}</span></div>`;
-      if(on) h+=`<div class="bd"><label class="f">Сколько, ${i.unit}<input type="number" step="any" min="0" inputmode="decimal" data-bqty="${i.id}" value="${b.qty??''}" placeholder="0"></label><label class="f">Цена за ${i.unit}, ₼<input type="number" step="any" min="0" inputmode="decimal" data-bprice="${i.id}" value="${b.price??''}"></label><span class="sum" id="bs-${i.id}"></span></div>`;
+    h+=`<div class="grp">${esc(t(g))}</div>`;
+    for(const i of list){const b=S.buy[i.id];const on=!!b;const u=t(i.unit);
+      h+=`<div class="item ${on?'on':''}"><div class="hd" data-buyon="${i.id}"><input type="checkbox" tabindex="-1" ${on?'checked':''} aria-label="${esc(tn(i.name))}"><span class="nm">${esc(tn(i.name))}</span><span class="lp">${i.price?money(i.price)+'/'+u:''}</span></div>`;
+      if(on) h+=`<div class="bd"><label class="f">${t('Сколько, {0}',u)}<input type="number" step="any" min="0" inputmode="decimal" data-bqty="${i.id}" value="${b.qty??''}" placeholder="0"></label><label class="f">${t('Цена за {0}, ₼',u)}<input type="number" step="any" min="0" inputmode="decimal" data-bprice="${i.id}" value="${b.price??''}"></label><span class="sum" id="bs-${i.id}"></span></div>`;
       h+=`</div>`}
   }
-  h+=`<div class="bar"><div class="t">Потрачено в маркете<b id="tot">0 ₼</b></div><button class="btn" type="submit" id="go">Записать закупку</button></div>`;
+  h+=`<div class="bar"><div class="t">${t('Потрачено в маркете')}<b id="tot">0 ₼</b></div><button class="btn" type="submit" id="go">${t('Записать закупку')}</button></div>`;
   return h;
 }
 function fExp(){
-  return `<label class="f">На что<select id="fCat">${EXP_CATS.map(c=>`<option>${c}</option>`).join('')}</select></label>
-  <label class="f">Сумма, ₼<input type="number" id="fAmt" step="any" min="0" inputmode="decimal" placeholder="0"></label>
-  <label class="f">Комментарий (необязательно)<input type="text" id="fNote" placeholder="Например: аренда за октябрь"></label>
-  <button class="btn" type="submit" id="go">Записать расход</button>`;
+  return `<label class="f">${t('На что')}<select id="fCat">${EXP_CATS.map(c=>`<option value="${c}">${t(c)}</option>`).join('')}</select></label>
+  <label class="f">${t('Сумма, ₼')}<input type="number" id="fAmt" step="any" min="0" inputmode="decimal" placeholder="0"></label>
+  <label class="f">${t('Комментарий (необязательно)')}<input type="text" id="fNote" placeholder="${t('Например: аренда за октябрь')}"></label>
+  <button class="btn" type="submit" id="go">${t('Записать расход')}</button>`;
 }
 function fWaste(){
   const ingr=S.wkind==='ingredient', C=S.catalog;
   const list=ingr?C.ingredients:C.products;
-  return `<div class="seg"><button type="button" data-wkind="product" aria-pressed="${!ingr}">Готовые хинкали</button><button type="button" data-wkind="ingredient" aria-pressed="${ingr}">Продукты</button></div>
-  <label class="f">Что выбросили<select id="fItem">${list.map(x=>`<option value="${x.id}">${esc(x.name)}${ingr?' ('+x.unit+')':''}</option>`).join('')}</select></label>
-  <div class="row"><label class="f">Сколько${ingr?'':', шт'}<input type="number" id="fQty" step="any" min="0" inputmode="decimal" placeholder="0"></label>
-  <label class="f">Причина<select id="fReason">${WASTE_R.map(r=>`<option>${r}</option>`).join('')}</select></label></div>
-  <button class="btn" type="submit" id="go">Записать в убыток</button>`;
+  return `<div class="seg"><button type="button" data-wkind="product" aria-pressed="${!ingr}">${t('Готовые хинкали')}</button><button type="button" data-wkind="ingredient" aria-pressed="${ingr}">${t('Продукты')}</button></div>
+  <label class="f">${t('Что выбросили')}<select id="fItem">${list.map(x=>`<option value="${x.id}">${esc(tn(x.name))}${ingr?' ('+t(x.unit)+')':''}</option>`).join('')}</select></label>
+  <div class="row"><label class="f">${ingr?t('Сколько'):t('Сколько, шт')}<input type="number" id="fQty" step="any" min="0" inputmode="decimal" placeholder="0"></label>
+  <label class="f">${t('Причина')}<select id="fReason">${WASTE_R.map(r=>`<option value="${r}">${t(r)}</option>`).join('')}</select></label></div>
+  <button class="btn" type="submit" id="go">${t('Записать в убыток')}</button>`;
 }
 function fCash(){
   const out=S.cashDir==='out';
-  return `<div class="seg"><button type="button" data-cdir="in" aria-pressed="${!out}">Положить в кассу</button><button type="button" data-cdir="out" aria-pressed="${out}">Забрать из кассы</button></div>
-  <label class="f">Сумма, ₼<input type="number" id="fAmt" step="any" min="0" inputmode="decimal" placeholder="0"></label>
-  <label class="f">Комментарий<input type="text" id="fNote" placeholder="${out?'Например: забрал себе':'Например: начальный остаток'}"></label>
-  <p class="note" style="margin:0">Здесь — только движение денег без продажи и покупки: стартовая сумма, вложили свои, забрали себе.</p>
-  <button class="btn" type="submit" id="go">${out?'Забрать':'Положить'}</button>`;
+  return `<div class="seg"><button type="button" data-cdir="in" aria-pressed="${!out}">${t('Положить в кассу')}</button><button type="button" data-cdir="out" aria-pressed="${out}">${t('Забрать из кассы')}</button></div>
+  <label class="f">${t('Сумма, ₼')}<input type="number" id="fAmt" step="any" min="0" inputmode="decimal" placeholder="0"></label>
+  <label class="f">${t('Комментарий')}<input type="text" id="fNote" placeholder="${out?t('Например: забрал себе'):t('Например: начальный остаток')}"></label>
+  <p class="note" style="margin:0">${t('NOTE_CASH')}</p>
+  <button class="btn" type="submit" id="go">${out?t('Забрать'):t('Положить')}</button>`;
 }
 
 function refreshTotals(){
   const tot=$('#tot'), go=$('#go');
   if(S.type==='order'){let s=0,n=0;for(const p of S.catalog.products){const l=S.lines[p.id];if(!l)continue;const q=+l.qty||0;const pr=l.price??(S.channel==='wholesale'?p.wholesale:p.retail);s+=q*(+pr||0);n+=q;$('#pl-'+p.id)?.classList.toggle('on',q>0)}
-    if(tot) tot.textContent=money(s)+(n?' · '+nf(n)+' шт':''); if(go) go.disabled=!n}
+    if(tot) tot.textContent=money(s)+(n?' · '+nf(n)+' '+t('шт'):''); if(go) go.disabled=!n}
   else if(S.type==='production'){let n=0;const use={};const rec=S.catalog.recipes||{};
     for(const p of S.catalog.products){const q=+S.make[p.id]||0;n+=q;$('#pm-'+p.id)?.classList.toggle('on',q>0);const r=rec[p.id]||{};for(const k in r)use[k]=(use[k]||0)+(+r[k]||0)/100*q}
-    if(tot) tot.textContent=nf(n)+' шт'; if(go) go.disabled=!n;
+    if(tot) tot.textContent=nf(n)+' '+t('шт'); if(go) go.disabled=!n;
     const pv=$('#preview'); const ks=Object.keys(use).filter(k=>use[k]>0);
-    if(pv){pv.hidden=!ks.length;pv.innerHTML='Спишется: '+ks.map(k=>`${esc(iName(k))} <b>${qf(use[k])}</b> ${iUnit(k)}`).join(' · ')}}
+    if(pv){pv.hidden=!ks.length;pv.innerHTML=t('Спишется:')+' '+ks.map(k=>`${esc(iName(k))} <b>${qf(use[k])}</b> ${iUnit(k)}`).join(' · ')}}
   else if(S.type==='purchase'){let s=0,n=0;for(const id in S.buy){const b=S.buy[id];const v=(+b.qty||0)*(+b.price||0);s+=v;if(+b.qty>0)n++;const el=$('#bs-'+id);if(el)el.textContent=v?money(v):''}
-    if(tot) tot.textContent=money(s)+(n?' · '+n+' поз.':''); if(go) go.disabled=!n}
+    if(tot) tot.textContent=money(s)+(n?' · '+t('{0} поз.',n):''); if(go) go.disabled=!n}
 }
 
 /* ----- stock ----- */
 function vStock(){
   const {P,I,pc}=calc();
-  let h=`<h2>Готовые хинкали</h2><div class="tbl"><table><thead><tr><th>Вид</th><th>Осталось</th><th>Себест./шт</th><th>Цена штучно</th></tr></thead><tbody>`;
-  for(const p of S.catalog.products){const x=P[p.id];h+=`<tr><td>${esc(p.name)}</td><td class="n">${x.stock<0?`<span class="pill bad">${nf(x.stock)}</span>`:`<b>${nf(x.stock)}</b> шт`}</td><td class="n">${pc[p.id]?money(pc[p.id]):'—'}</td><td class="n">${money(p.retail)}</td></tr>`}
-  h+=`</tbody></table></div><p class="note">Себестоимость — по рецептуре и средней цене, по которой вы покупали продукты.</p>`;
-  h+=`<h2>Продукты на складе</h2><div class="tbl"><table><thead><tr><th>Продукт</th><th>Осталось</th><th>Хватит на</th></tr></thead><tbody>`;
+  let h=`<h2>${t('Готовые хинкали')}</h2><div class="tbl"><table><thead><tr><th>${t('Вид')}</th><th>${t('Осталось')}</th><th>${t('Себест./шт')}</th><th>${t('Цена штучно')}</th></tr></thead><tbody>`;
+  for(const p of S.catalog.products){const x=P[p.id];h+=`<tr><td>${esc(tn(p.name))}</td><td class="n">${x.stock<0?`<span class="pill bad">${nf(x.stock)}</span>`:`<b>${nf(x.stock)}</b> ${t('шт')}`}</td><td class="n">${pc[p.id]?money(pc[p.id]):'—'}</td><td class="n">${money(p.retail)}</td></tr>`}
+  h+=`</tbody></table></div><p class="note">${t('Себестоимость — по рецептуре и средней цене, по которой вы покупали продукты.')}</p>`;
+  h+=`<h2>${t('Продукты на складе')}</h2><div class="tbl"><table><thead><tr><th>${t('Продукт')}</th><th>${t('Осталось')}</th><th>${t('Хватит на')}</th></tr></thead><tbody>`;
   const rec=S.catalog.recipes||{};
-  for(const i of S.catalog.ingredients){const x=I[i.id];
+  for(const i of S.catalog.ingredients){const x=I[i.id];const u=t(i.unit);
     let per=0;for(const pid in rec){const v=+rec[pid]?.[i.id]||0;if(v>per)per=v}
     const pcs=per&&x.stock>0?Math.floor(x.stock/per*100):null;
     if(!x.stock&&!per) continue;
-    const st=x.stock<-1e-9?`<span class="pill bad">${qf(x.stock)} ${i.unit}</span>`:(x.stock<1e-9?`<span class="pill warn">нет</span>`:`<b>${qf(x.stock)}</b> ${i.unit}`);
-    h+=`<tr><td>${esc(i.name)}</td><td class="n">${st}</td><td class="n">${pcs!=null?'~'+nf(pcs)+' шт':'—'}</td></tr>`}
-  h+=`</tbody></table></div><p class="note">Красный минус значит, что слепили больше, чем записано в закупках — проверьте, всё ли купленное внесли. «Хватит на» — примерно, по самому «прожорливому» виду.</p>`;
+    const st=x.stock<-1e-9?`<span class="pill bad">${qf(x.stock)} ${u}</span>`:(x.stock<1e-9?`<span class="pill warn">${t('нет')}</span>`:`<b>${qf(x.stock)}</b> ${u}`);
+    h+=`<tr><td>${esc(tn(i.name))}</td><td class="n">${st}</td><td class="n">${pcs!=null?t('~{0} шт',nf(pcs)):'—'}</td></tr>`}
+  h+=`</tbody></table></div><p class="note">${t('NOTE_STOCK')}</p>`;
   return h;
 }
 
 /* ----- log ----- */
 function vLog(){
-  if(!S.ops.length) return `<div class="empty">Записей пока нет. Нажмите «+ Записать».</div>`;
+  if(!S.ops.length) return `<div class="empty">${t('Записей пока нет. Нажмите «+ Записать».')}</div>`;
   const by={}; for(const o of S.ops)(by[o.date]=by[o.date]||[]).push(o);
   const L={order:'Заказ',sale:'Заказ',production:'Лепка',purchase:'Закупка',expense:'Расход',waste:'Мусор',cash:'Касса'};
   let h='';
   for(const d of Object.keys(by).sort().reverse()){
     const day=by[d]; const rev=day.filter(isOrder).reduce((s,o)=>s+(+o.amount||0),0);
-    h+=`<div class="day"><h3><span>${dLabel(d)}</span><span>${rev?'выручка '+money(rev):''}</span></h3>`;
+    h+=`<div class="day"><h3><span>${dLabel(d)}</span><span>${rev?t('выручка {0}',money(rev)):''}</span></h3>`;
     for(const o of day.sort((x,y)=>(y.ts||0)-(x.ts||0))){
       let name='',sub='',right='';
-      if(isOrder(o)){const ls=orderLines(o);name=ls.map(l=>`${pName(l.item).replace('Хинкали ','')} × ${nf(l.qty)}`).join(', ');
-        sub=(o.channel==='wholesale'?'Опт':'Штучно')+(o.client?' · '+esc(o.client):'')+(orderPaid(o)?'':' · <b class="minus">в долг</b>');right=money(o.amount)}
+      if(isOrder(o)){const ls=orderLines(o);name=ls.map(l=>`${pName(l.item)} × ${nf(l.qty)}`).join(', ');
+        sub=(o.channel==='wholesale'?t('Опт'):t('Штучно'))+(o.client?' · '+esc(o.client):'')+(orderPaid(o)?'':` · <b class="minus">${t('в долг')}</b>`);right=money(o.amount)}
       else if(o.type==='purchase'){name=iName(o.item);sub=`${qf(o.qty)} ${iUnit(o.item)} × ${money(o.price??o.amount/o.qty)}`;right='−'+money(o.amount)}
-      else if(o.type==='production'){name=pName(o.item);right=nf(o.qty)+' шт'}
-      else if(o.type==='expense'){name=o.category;sub=esc(o.note||'');right='−'+money(o.amount)}
-      else if(o.type==='waste'){name=o.kind==='ingredient'?iName(o.item):pName(o.item);sub=esc(o.reason||'');right=qf(o.qty)+' '+(o.kind==='ingredient'?iUnit(o.item):'шт')}
-      else if(o.type==='cash'){name=o.dir==='out'?'Забрали из кассы':'Положили в кассу';sub=esc(o.note||'');right=(o.dir==='out'?'−':'+')+money(o.amount)}
-      if(o.example) sub+=(sub?' · ':'')+'пример';
+      else if(o.type==='production'){name=pName(o.item);right=nf(o.qty)+' '+t('шт')}
+      else if(o.type==='expense'){name=t(o.category);sub=esc(o.note||'');right='−'+money(o.amount)}
+      else if(o.type==='waste'){name=o.kind==='ingredient'?iName(o.item):pName(o.item);sub=esc(t(o.reason||''));right=qf(o.qty)+' '+(o.kind==='ingredient'?iUnit(o.item):t('шт'))}
+      else if(o.type==='cash'){name=o.dir==='out'?t('Забрали из кассы'):t('Положили в кассу');sub=esc(o.note||'');right=(o.dir==='out'?'−':'+')+money(o.amount)}
       const sure=S.confirmDel===o.id;
-      h+=`<div class="op"><span class="t ${o.type==='sale'?'order':o.type}">${L[o.type]||o.type}</span><div class="main"><div>${esc(name)}</div><div>${sub}</div></div><div class="r"><span>${right}</span><button class="x ${sure?'sure':''}" data-del="${o.id}">${sure?'Точно удалить?':'удалить'}</button></div></div>`;
+      h+=`<div class="op"><span class="t ${o.type==='sale'?'order':o.type}">${t(L[o.type]||o.type)}</span><div class="main"><div>${esc(name)}</div><div>${sub}</div></div><div class="r"><span>${right}</span><button class="x ${sure?'sure':''}" data-del="${o.id}">${sure?t('Точно удалить?'):t('удалить')}</button></div></div>`;
     }
     h+=`</div>`;
   }
   return h;
 }
 
-/* ----- catalog ----- */
+/* ----- settings ----- */
 function vCat(){
   const C=S.catalog;
-  let h=`<div class="stack"><div class="card"><h2>Виды хинкали и цены</h2>`;
-  for(const p of C.products) h+=`<div class="cat-row" data-pid="${p.id}"><label class="f">Название<input data-k="name" value="${esc(p.name)}"></label><label class="f">Штучно, ₼<input type="number" step="any" data-k="retail" value="${p.retail}"></label><label class="f">Опт, ₼/шт<input type="number" step="any" data-k="wholesale" value="${p.wholesale}"></label><button class="btn ghost sm" data-rmp="${p.id}" type="button">Убрать</button></div>`;
-  h+=`<p style="margin:10px 0 0"><button class="btn ghost" data-act="addP" type="button">+ Вид хинкали</button></p></div>`;
-  h+=`<div class="card"><h2>Продукты и цены</h2><p class="note" style="margin-top:-4px">Цена обновляется сама после каждой закупки.</p>`;
-  for(const i of C.ingredients) h+=`<div class="cat-row ing" data-iid="${i.id}"><label class="f">Название<input data-k="name" value="${esc(i.name)}"></label><label class="f">Ед.<select data-k="unit">${['кг','л','шт','пучок','уп'].map(u=>`<option ${u===i.unit?'selected':''}>${u}</option>`).join('')}</select></label><label class="f">Цена, ₼<input type="number" step="any" data-k="price" value="${i.price??''}"></label><label class="f">Раздел<select data-k="group">${GROUPS.map(g=>`<option ${g===(i.group||'Прочее')?'selected':''}>${g}</option>`).join('')}</select></label><button class="btn ghost sm" data-rmi="${i.id}" type="button">Убрать</button></div>`;
-  h+=`<p style="margin:10px 0 0"><button class="btn ghost" data-act="addI" type="button">+ Продукт</button></p></div>`;
+  let h=`<div class="stack"><div class="card"><h2>${t('Язык')} / Dil</h2><div class="seg"><button type="button" data-lang="az" aria-pressed="${LANG==='az'}">Azərbaycanca</button><button type="button" data-lang="ru" aria-pressed="${LANG==='ru'}">Русский</button></div></div>`;
+  h+=`<div class="card"><h2>${t('Виды хинкали и цены')}</h2>`;
+  for(const p of C.products) h+=`<div class="cat-row" data-pid="${p.id}"><label class="f">${t('Название')}<input data-k="name" data-orig="${esc(p.name)}" value="${esc(tn(p.name))}"></label><label class="f">${t('Штучно, ₼')}<input type="number" step="any" data-k="retail" value="${p.retail}"></label><label class="f">${t('Опт, ₼/шт')}<input type="number" step="any" data-k="wholesale" value="${p.wholesale}"></label><button class="btn ghost sm" data-rmp="${p.id}" type="button">${t('Убрать')}</button></div>`;
+  h+=`<p style="margin:10px 0 0"><button class="btn ghost" data-act="addP" type="button">${t('+ Вид хинкали')}</button></p></div>`;
+  h+=`<div class="card"><h2>${t('Продукты и цены')}</h2><p class="note" style="margin-top:-4px">${t('Цена обновляется сама после каждой закупки.')}</p>`;
+  for(const i of C.ingredients) h+=`<div class="cat-row ing" data-iid="${i.id}"><label class="f">${t('Название')}<input data-k="name" data-orig="${esc(i.name)}" value="${esc(tn(i.name))}"></label><label class="f">${t('Ед.')}<select data-k="unit">${UNITS.map(u=>`<option value="${u}" ${u===i.unit?'selected':''}>${t(u)}</option>`).join('')}</select></label><label class="f">${t('Цена, ₼')}<input type="number" step="any" data-k="price" value="${i.price??''}"></label><label class="f">${t('Раздел')}<select data-k="group">${GROUPS.map(g=>`<option value="${g}" ${g===(i.group||'Прочее')?'selected':''}>${t(g)}</option>`).join('')}</select></label><button class="btn ghost sm" data-rmi="${i.id}" type="button">${t('Убрать')}</button></div>`;
+  h+=`<p style="margin:10px 0 0"><button class="btn ghost" data-act="addI" type="button">${t('+ Продукт')}</button></p></div>`;
   const sel=S.recProd&&prod(S.recProd)?S.recProd:C.products[0]?.id;
-  h+=`<div class="card"><h2>Рецептура на 100 штук</h2><p class="note" style="margin-top:-4px">Сколько продуктов уходит на 100 хинкали. Пустое поле — продукт не нужен.</p>`;
-  if(sel){h+=`<label class="f" style="margin-top:10px">Вид<select id="recSel">${C.products.map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(p.name)}</option>`).join('')}</select></label><div class="rec">`;
+  h+=`<div class="card"><h2>${t('Рецептура на 100 штук')}</h2><p class="note" style="margin-top:-4px">${t('Сколько продуктов уходит на 100 хинкали. Пустое поле — продукт не нужен.')}</p>`;
+  if(sel){h+=`<label class="f" style="margin-top:10px">${t('Вид')}<select id="recSel">${C.products.map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(tn(p.name))}</option>`).join('')}</select></label><div class="rec">`;
     const r=C.recipes?.[sel]||{};
-    for(const i of C.ingredients){if(i.group==='Упаковка')continue;h+=`<label class="f">${esc(i.name)}, ${i.unit}<input type="number" step="any" min="0" data-rec="${i.id}" value="${r[i.id]??''}" placeholder="—"></label>`}
+    for(const i of C.ingredients){if(i.group==='Упаковка')continue;h+=`<label class="f">${esc(tn(i.name))}, ${t(i.unit)}<input type="number" step="any" min="0" data-rec="${i.id}" value="${r[i.id]??''}" placeholder="—"></label>`}
     h+=`</div>`}
-  h+=`</div><button class="btn" data-act="saveCat" type="button">Сохранить настройки</button>`;
+  h+=`</div><button class="btn" data-act="saveCat" type="button">${t('Сохранить настройки')}</button>`;
   const days=S.lastBackup?Math.round((new Date(today())-new Date(S.lastBackup))/864e5):null;
-  h+=`<div class="card"><h2>Резервная копия</h2><p class="note" style="margin-top:-4px">Все записи хранятся только в этом телефоне. Раз в неделю сохраняйте копию в «Файлы», Telegram или WhatsApp — если телефон потеряется или сломается, учёт можно будет восстановить на новом. ${S.lastBackup?'Последняя копия: '+(days===0?'сегодня':days+' дн. назад')+'.':'<b>Копию ещё не делали.</b>'}</p>
-  <div class="backup"><button class="btn" data-act="backup" type="button">Сохранить копию</button><label class="btn ghost filebtn">Восстановить из копии<input type="file" id="restoreFile" accept=".json,application/json"></label></div>`;
-  if(S.pendingRestore){const d=S.pendingRestore;h+=`<div class="alert bad" style="margin-top:10px">В копии ${d.ops.length} записей от ${esc((d.saved||'').slice(0,10))}. Текущие данные на телефоне (${S.ops.length} записей) будут заменены. <button class="btn sm" data-act="doRestore" type="button">Заменить</button> <button class="x" data-act="noRestore" type="button">Отмена</button></div>`}
-  h+=`</div>`;
-  if(S.ops.some(o=>o.example)) h+=`<button class="btn ghost" data-act="clearEx" type="button">Удалить примерные записи</button>`;
-  h+=`</div>`;
+  h+=`<div class="card"><h2>${t('Резервная копия')}</h2><p class="note" style="margin-top:-4px">${t('NOTE_BACKUP')} ${S.lastBackup?(days===0?t('Последняя копия: сегодня.'):t('Последняя копия: {0} дн. назад.',days)):`<b>${t('Копию ещё не делали.')}</b>`}</p>
+  <div class="backup"><button class="btn" data-act="backup" type="button">${t('Сохранить копию')}</button><label class="btn ghost filebtn">${t('Восстановить из копии')}<input type="file" id="restoreFile" accept=".json,application/json"></label></div>`;
+  if(S.pendingRestore){const d=S.pendingRestore;h+=`<div class="alert bad" style="margin-top:10px">${t('RESTORE_Q',esc((d.saved||'').slice(0,10)),d.ops.length,S.ops.length)} <button class="btn sm" data-act="doRestore" type="button">${t('Заменить')}</button> <button class="x" data-act="noRestore" type="button">${t('Отмена')}</button></div>`}
+  h+=`</div></div>`;
   return h;
 }
+// Имя из поля: если пользователь не менял переведённое стандартное название — храним исходное.
+const nameFrom=inp=>{const v=inp.value.trim();const o=inp.dataset.orig;if(o&&v===tn(o))return o;return v||'Без названия'};
 function readCatDom(){
   const C=JSON.parse(JSON.stringify(S.catalog));
   $$('[data-pid]').forEach(r=>{const p=C.products.find(x=>x.id===r.dataset.pid);if(!p)return;
-    p.name=r.querySelector('[data-k=name]').value.trim()||'Без названия';p.retail=+r.querySelector('[data-k=retail]').value||0;p.wholesale=+r.querySelector('[data-k=wholesale]').value||0});
+    p.name=nameFrom(r.querySelector('[data-k=name]'));p.retail=+r.querySelector('[data-k=retail]').value||0;p.wholesale=+r.querySelector('[data-k=wholesale]').value||0});
   $$('[data-iid]').forEach(r=>{const i=C.ingredients.find(x=>x.id===r.dataset.iid);if(!i)return;
-    i.name=r.querySelector('[data-k=name]').value.trim()||'Без названия';i.unit=r.querySelector('[data-k=unit]').value;i.group=r.querySelector('[data-k=group]').value;const pr=r.querySelector('[data-k=price]').value;i.price=pr===''?null:+pr});
+    i.name=nameFrom(r.querySelector('[data-k=name]'));i.unit=r.querySelector('[data-k=unit]').value;i.group=r.querySelector('[data-k=group]').value;const pr=r.querySelector('[data-k=price]').value;i.price=pr===''?null:+pr});
   const sel=$('#recSel')?.value;
   if(sel){const r={};$$('[data-rec]').forEach(x=>{const v=+x.value;if(v)r[x.dataset.rec]=v});C.recipes=C.recipes||{};C.recipes[sel]=r}
   return C;
@@ -501,45 +581,48 @@ const DEFAULT_CATALOG={"products": [{"id": "pb", "name": "Хинкали с го
 let storageOk=true;
 function persist(){
   try{localStorage.setItem(KEY,JSON.stringify({v:1,catalog:S.catalog,ops:S.ops,lastBackup:S.lastBackup||null}));storageOk=true}
-  catch(e){storageOk=false;toast('Память телефона не сохранила данные. Сделайте резервную копию.')}
+  catch(e){storageOk=false;toast(t('Память телефона не сохранила данные. Сделайте резервную копию.'))}
 }
 function load(){
   try{const raw=localStorage.getItem(KEY);if(raw){const d=JSON.parse(raw);S.catalog=d.catalog||JSON.parse(JSON.stringify(DEFAULT_CATALOG));S.ops=Array.isArray(d.ops)?d.ops:[];S.lastBackup=d.lastBackup||null;return}}
   catch(e){storageOk=false}
   S.catalog=JSON.parse(JSON.stringify(DEFAULT_CATALOG));S.ops=[];
 }
-async function saveCatalog(C,silent){S.catalog=C;persist();if(!silent){toast('Настройки сохранены');render()}return true}
-async function addOps(list){const base=Date.now();list.forEach((o,k)=>{o.id=o.id||uid();o.ts=base+k;S.ops.push(o)});persist();return true}
-async function delOp(id){S.ops=S.ops.filter(o=>o.id!==id);persist()}
-async function markPaid(id){const o=S.ops.find(x=>x.id===id);if(!o)return;o.paid=true;o.paidDate=today();persist();toast('Оплата записана — деньги в кассе')}
+function saveCatalog(C,silent){S.catalog=C;persist();if(!silent){toast(t('Настройки сохранены'));render()}return true}
+function addOps(list){const base=Date.now();list.forEach((o,k)=>{o.id=o.id||uid();o.ts=base+k;S.ops.push(o)});persist();return true}
+function delOp(id){S.ops=S.ops.filter(o=>o.id!==id);persist()}
+function markPaid(id){const o=S.ops.find(x=>x.id===id);if(!o)return;o.paid=true;o.paidDate=today();persist();toast(t('Оплата записана — деньги в кассе'))}
+function setLang(l){LANG=l;try{localStorage.setItem(LANG_KEY,l)}catch(_){}render()}
 
 /* ---------- резервная копия ---------- */
 async function makeBackup(){
   const data=JSON.stringify({app:'khinkali',v:1,saved:new Date().toISOString(),catalog:S.catalog,ops:S.ops},null,1);
-  const name='hinkali-kopiya-'+today()+'.json';
+  const name='hinkali-'+today()+'.json';
   const file=new File([data],name,{type:'application/json'});
   try{
-    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'Копия учёта хинкали'})}
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:t('Резервная копия')})}
     else{const url=URL.createObjectURL(file);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000)}
-    S.lastBackup=today();persist();toast('Копия сохранена');render();
-  }catch(e){if(e&&e.name==='AbortError')return;toast('Не получилось сохранить копию')}
+    S.lastBackup=today();persist();toast(t('Копия сохранена'));render();
+  }catch(e){if(e&&e.name==='AbortError')return;toast(t('Не получилось сохранить копию'))}
 }
 function restoreBackup(file){
   const r=new FileReader();
-  r.onload=()=>{try{const d=JSON.parse(r.result);if(d.app!=='khinkali'||!Array.isArray(d.ops))throw 0;
-    S.pendingRestore=d;render();}catch(e){toast('Это не файл копии учёта хинкали')}};
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(d.app!=='khinkali'||!Array.isArray(d.ops))throw 0;S.pendingRestore=d;render()}catch(e){toast(t('Это не файл копии учёта хинкали'))}};
   r.readAsText(file);
 }
+
 /* ---------- events ---------- */
+$('#langBtn').addEventListener('click',()=>{if(S.tab==='cat')S.catalog=readCatDom();setLang(LANG==='az'?'ru':'az')});
 $('nav.tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(!b)return;
   if(S.tab==='cat'&&b.dataset.tab!=='cat') S.catalog=readCatDom();
   S.tab=b.dataset.tab;S.confirmDel=null;render();window.scrollTo(0,0)});
 
-view.addEventListener('click',async e=>{
+view.addEventListener('click',e=>{
   const hd=e.target.closest('[data-buyon]');
   if(hd){const id=hd.dataset.buyon;if(S.buy[id])delete S.buy[id];else S.buy[id]={qty:'',price:ing(id)?.price??''};render();setTimeout(()=>$(`[data-bqty="${id}"]`)?.focus(),0);return}
-  const t=e.target.closest('button');if(!t)return;
-  const d=t.dataset;
+  const b=e.target.closest('button');if(!b)return;
+  const d=b.dataset;
+  if(d.lang){S.catalog=readCatDom();return setLang(d.lang)}
   if(d.period){S.period=d.period;return render()}
   if(d.go){S.type=d.go;S.tab='add';render();window.scrollTo(0,0);return}
   if(d.ftype){S.type=d.ftype;return render()}
@@ -549,19 +632,17 @@ view.addEventListener('click',async e=>{
   if(d.cdir){S.cashDir=d.cdir;return render()}
   if(d.step){const id=d.step;const l=S.lines[id]||(S.lines[id]={});l.qty=Math.max(0,(+l.qty||0)+ +d.d);const inp=$(`[data-lqty="${id}"]`);if(inp)inp.value=l.qty||'';return refreshTotals()}
   if(d.mstep){const id=d.mstep;S.make[id]=Math.max(0,(+S.make[id]||0)+ +d.d);const inp=$(`[data-mqty="${id}"]`);if(inp)inp.value=S.make[id]||'';return refreshTotals()}
-  if(d.del){if(S.confirmDel!==d.del){S.confirmDel=d.del;return render()}S.confirmDel=null;await delOp(d.del);toast('Запись удалена');return render()}
-  if(d.paid){await markPaid(d.paid);return render()}
+  if(d.del){if(S.confirmDel!==d.del){S.confirmDel=d.del;return render()}S.confirmDel=null;delOp(d.del);toast(t('Запись удалена'));return render()}
+  if(d.paid){markPaid(d.paid);return render()}
   if(d.rmp){const C=readCatDom();C.products=C.products.filter(p=>p.id!==d.rmp);S.catalog=C;return render()}
   if(d.rmi){const C=readCatDom();C.ingredients=C.ingredients.filter(p=>p.id!==d.rmi);S.catalog=C;return render()}
   const a=d.act;
-  if(a==='addP'){const C=readCatDom();C.products.push({id:'p'+uid(),name:'Новый вид',retail:1,wholesale:0.7});S.catalog=C;return render()}
-  if(a==='addI'){const C=readCatDom();C.ingredients.push({id:'i'+uid(),name:'Новый продукт',unit:'кг',price:null,group:'Прочее'});S.catalog=C;return render()}
+  if(a==='addP'){const C=readCatDom();C.products.push({id:'p'+uid(),name:t('Новый вид'),retail:1,wholesale:0.7});S.catalog=C;return render()}
+  if(a==='addI'){const C=readCatDom();C.ingredients.push({id:'i'+uid(),name:t('Новый продукт'),unit:'кг',price:null,group:'Прочее'});S.catalog=C;return render()}
   if(a==='saveCat') return saveCatalog(readCatDom());
   if(a==='backup') return makeBackup();
-  if(a==='doRestore'){const d=S.pendingRestore;S.pendingRestore=null;S.catalog=d.catalog||S.catalog;S.ops=d.ops;persist();toast('Данные восстановлены');return render()}
+  if(a==='doRestore'){const dd=S.pendingRestore;S.pendingRestore=null;S.catalog=dd.catalog||S.catalog;S.ops=dd.ops;persist();toast(t('Данные восстановлены'));return render()}
   if(a==='noRestore'){S.pendingRestore=null;return render()}
-  if(a==='clearEx'){if(S.confirmDel!=='__ex'){S.confirmDel='__ex';t.textContent='Точно удалить все примеры?';t.classList.add('sure');return}
-    S.confirmDel=null;for(const o of S.ops.filter(o=>o.example))await delOp(o.id);toast('Примеры удалены — можно работать');return render()}
 });
 
 view.addEventListener('input',e=>{
@@ -581,49 +662,47 @@ view.addEventListener('change',e=>{
   if(e.target.id==='restoreFile'&&e.target.files[0]) restoreBackup(e.target.files[0]);
 });
 
-view.addEventListener('submit',async e=>{
+view.addEventListener('submit',e=>{
   e.preventDefault(); if(S.busy) return;
   const date=$('#fDate').value||today(); S.date=date===today()?'':date;
   let list=[], msg='';
   if(S.type==='order'){
     const lines=[];for(const p of S.catalog.products){const l=S.lines[p.id];const q=+l?.qty||0;if(q>0)lines.push({item:p.id,qty:q,price:+(l.price??(S.channel==='wholesale'?p.wholesale:p.retail))||0})}
-    if(!lines.length) return toast('Добавьте хотя бы одну позицию');
+    if(!lines.length) return toast(t('Добавьте хотя бы одну позицию'));
     const amount=r2(lines.reduce((s,l)=>s+l.qty*l.price,0));
     const o={type:'order',date,channel:S.channel,lines,amount,paid:S.paid};const c=$('#fClient').value.trim();if(c)o.client=c;
-    if(!S.paid&&!c) return toast('Для долга укажите клиента');
-    list=[o];msg='Заказ записан: '+money(amount);
+    if(!S.paid&&!c) return toast(t('Для долга укажите клиента'));
+    list=[o];msg=t('Заказ записан: {0}',money(amount));
   } else if(S.type==='production'){
     for(const p of S.catalog.products){const q=+S.make[p.id]||0;if(q>0)list.push({type:'production',date,item:p.id,qty:q})}
-    if(!list.length) return toast('Укажите количество');
-    msg='Слеплено '+nf(list.reduce((s,o)=>s+o.qty,0))+' шт';
+    if(!list.length) return toast(t('Укажите количество'));
+    msg=t('Слеплено {0} шт',nf(list.reduce((s,o)=>s+o.qty,0)));
   } else if(S.type==='purchase'){
     const trip=uid();
     for(const id in S.buy){const b=S.buy[id];const q=+b.qty||0;if(q<=0)continue;const pr=+b.price||0;list.push({type:'purchase',date,item:id,qty:q,price:pr,amount:r2(q*pr),trip})}
-    if(!list.length) return toast('Укажите, сколько купили');
-    msg='Закупка записана: '+money(list.reduce((s,o)=>s+o.amount,0));
+    if(!list.length) return toast(t('Укажите, сколько купили'));
+    msg=t('Закупка записана: {0}',money(list.reduce((s,o)=>s+o.amount,0)));
   } else if(S.type==='expense'){
-    const amt=+$('#fAmt').value;if(!(amt>0))return toast('Укажите сумму');
-    list=[{type:'expense',date,category:$('#fCat').value,amount:r2(amt),note:$('#fNote').value.trim()}];msg='Расход записан';
+    const amt=+$('#fAmt').value;if(!(amt>0))return toast(t('Укажите сумму'));
+    list=[{type:'expense',date,category:$('#fCat').value,amount:r2(amt),note:$('#fNote').value.trim()}];msg=t('Расход записан');
   } else if(S.type==='waste'){
-    const q=+$('#fQty').value;if(!(q>0))return toast('Укажите количество');
-    list=[{type:'waste',date,kind:S.wkind,item:$('#fItem').value,qty:q,reason:$('#fReason').value}];msg='Записано в убыток';
+    const q=+$('#fQty').value;if(!(q>0))return toast(t('Укажите количество'));
+    list=[{type:'waste',date,kind:S.wkind,item:$('#fItem').value,qty:q,reason:$('#fReason').value}];msg=t('Записано в убыток');
   } else {
-    const amt=+$('#fAmt').value;if(!(amt>0))return toast('Укажите сумму');
-    list=[{type:'cash',date,dir:S.cashDir,amount:r2(amt),note:$('#fNote').value.trim()}];msg=S.cashDir==='out'?'Деньги забраны из кассы':'Деньги в кассе';
+    const amt=+$('#fAmt').value;if(!(amt>0))return toast(t('Укажите сумму'));
+    list=[{type:'cash',date,dir:S.cashDir,amount:r2(amt),note:$('#fNote').value.trim()}];msg=S.cashDir==='out'?t('Деньги забраны из кассы'):t('Деньги в кассе');
   }
   S.busy=true;
-  const ok=await addOps(list);
-  if(ok&&S.type==='purchase'){const C=JSON.parse(JSON.stringify(S.catalog));let ch=false;
+  addOps(list);
+  if(S.type==='purchase'){const C=JSON.parse(JSON.stringify(S.catalog));let ch=false;
     for(const o of list){const i=C.ingredients.find(x=>x.id===o.item);if(i&&o.price&&i.price!==o.price){i.price=o.price;ch=true}}
-    if(ch) await saveCatalog(C,true);}
+    if(ch) saveCatalog(C,true);}
   S.busy=false;
-  if(ok){S.lines={};S.make={};S.buy={};S.client='';S.paid=true;toast(msg);render()}
+  S.lines={};S.make={};S.buy={};S.client='';S.paid=true;toast(msg);render();
 });
 
 /* ---------- boot ---------- */
 load();
-const st=$('#status');
-st.textContent=storageOk?'Данные хранятся в этом телефоне':'Память недоступна — откройте в Safari';
 render();
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(_){}
 if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
