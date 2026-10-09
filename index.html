@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Хинкали">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#141916">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>Цех хинкали</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: phone-first single column — cash card on top, sticky tabs, forms with a sticky total bar */
+:root{
+  --bg:#f3f5f2; --surface:#ffffff; --ink:#1d2420; --muted:#66706a; --line:#dde3de;
+  --accent:#2f6b4f; --accent-soft:#e1eee6; --dough:#efe6d4;
+  --good:#2f7d4f; --warn:#b7791f; --bad:#b83a32; --bad-soft:#f7e3e1; --warn-soft:#f6ecd8;
+  --f-display:"Unbounded","Manrope",system-ui,sans-serif;
+  --f-body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141916; --surface:#1c2320; --ink:#e7ece8; --muted:#97a39b; --line:#2c3631;
+  --accent:#6cc296; --accent-soft:#213b2e; --dough:#3a3426;
+  --good:#6cc296; --warn:#e0b25c; --bad:#ec7b72; --bad-soft:#3d2321; --warn-soft:#3a3020; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141916; --surface:#1c2320; --ink:#e7ece8; --muted:#97a39b; --line:#2c3631;
+  --accent:#6cc296; --accent-soft:#213b2e; --dough:#3a3426;
+  --good:#6cc296; --warn:#e0b25c; --bad:#ec7b72; --bad-soft:#3d2321; --warn-soft:#3a3020; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.wrap{max-width:860px;margin:0 auto;padding-inline:16px;padding-block:0 56px}
+header.top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-top:18px}
+h1{font-family:var(--f-display);font-weight:700;font-size:1.25rem;margin:0;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:.82rem}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:2px;padding-block:10px;overflow-x:auto;border-bottom:1px solid var(--line);margin-bottom:16px}
+nav.tabs button{flex:1 0 auto;border:0;background:transparent;color:var(--muted);font:600 .88rem var(--f-body);padding:9px 10px;border-radius:8px;cursor:pointer}
+nav.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h2{font-family:var(--f-display);font-weight:500;font-size:.98rem;margin:24px 0 10px}
+h2:first-child{margin-top:0}
+.note{font-size:.8rem;color:var(--muted);margin:6px 0 0}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chip{border:1px solid var(--line);background:var(--surface);padding:6px 12px;border-radius:999px;font-size:.84rem;font-weight:600;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.range{display:flex;gap:8px;flex-wrap:wrap;margin:-2px 0 12px}
+.range label{flex:1;min-width:130px}
+.cash{background:var(--ink);color:var(--bg);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.cash .l{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;opacity:.75;font-weight:700}
+.cash .v{font-family:var(--f-num);font-size:2rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.15}
+.cash .d{font-size:.82rem;opacity:.8}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:20px}
+.quick button{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:12px 4px;font-weight:700;font-size:.82rem;cursor:pointer}
+.quick button.main{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.result{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:4px 14px;margin-bottom:12px}
+.result .ln{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:.92rem}
+.result .ln:last-child{border-bottom:0}
+.result .ln span:last-child{font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.result .tot{font-weight:700;font-size:1.02rem}
+.plus{color:var(--good)} .minus{color:var(--bad)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:8px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:1px}
+.kpi .l{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+.kpi .v{font-family:var(--f-num);font-size:1.2rem;font-weight:600;font-variant-numeric:tabular-nums}
+.kpi .d{font-size:.76rem;color:var(--muted)}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{padding:8px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left;white-space:normal;min-width:120px}
+th{font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td.n{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:.74rem;font-weight:700}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.ok{background:var(--accent-soft);color:var(--accent)}
+.alert{background:var(--warn-soft);border-radius:var(--r);padding:10px 12px;font-size:.86rem;margin-bottom:12px}
+.alert.bad{background:var(--bad-soft)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.types{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px}
+.types button{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:10px 4px;font-weight:700;font-size:.85rem;cursor:pointer}
+.types button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.form{display:flex;flex-direction:column;gap:12px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:480px){.row{grid-template-columns:1fr}}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.78rem;font-weight:600;color:var(--muted);min-width:0}
+input,select{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:10px;font-size:1rem;color:var(--ink)}
+input[type=number]{font-family:var(--f-num)}
+input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent);flex:none;margin:0}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{flex:1;border:0;background:var(--bg);padding:10px 6px;font-weight:600;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+.grp{font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700;margin:8px 0 -4px}
+.item{border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.item.on{border-color:var(--accent);background:var(--accent-soft)}
+.item .hd{display:flex;align-items:center;gap:10px;padding:11px 12px;cursor:pointer}
+.item .hd .nm{flex:1;font-weight:600;min-width:0}
+.item .hd .lp{font-size:.78rem;color:var(--muted);font-family:var(--f-num);white-space:nowrap}
+.item .bd{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;padding:0 12px 12px;align-items:end}
+.item .bd .sum{font-family:var(--f-num);font-weight:600;padding-bottom:10px;white-space:nowrap}
+.pl{display:grid;grid-template-columns:1fr auto;gap:8px 10px;align-items:center;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:10px 12px}
+.pl.on{border-color:var(--accent);background:var(--accent-soft)}
+.pl .nm{font-weight:600;min-width:0}
+.pl .pr{display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--muted)}
+.pl .pr input{width:84px;padding:6px 8px;font-size:.9rem}
+.step{display:flex;align-items:center;gap:4px}
+.step button{width:38px;height:38px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-weight:700;font-size:1.1rem;cursor:pointer}
+.step input{width:70px;text-align:center;padding:8px 4px}
+.bar{position:sticky;bottom:env(safe-area-inset-bottom,0px);background:var(--bg);border-top:1px solid var(--line);padding-block:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:4}
+.bar .t{font-size:.8rem;color:var(--muted)}
+.bar .t b{display:block;font-family:var(--f-num);font-size:1.15rem;color:var(--ink)}
+.preview{background:var(--dough);border-radius:8px;padding:10px 12px;font-size:.86rem}
+.preview b{font-family:var(--f-num)}
+.btn{border:0;background:var(--accent);color:var(--bg);font-weight:700;padding:12px 18px;border-radius:8px;cursor:pointer;font-size:1rem}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);font-size:.86rem;padding:8px 12px}
+.btn.sm{padding:6px 10px;font-size:.82rem}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-weight:600;font-size:.9rem;z-index:20;max-width:calc(100% - 32px)}
+.day{margin-top:14px}
+.day h3{font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 6px;display:flex;justify-content:space-between}
+.op{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px;margin-bottom:6px}
+.op .t{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:3px 6px;border-radius:6px;background:var(--bg);color:var(--muted)}
+.op .t.order{background:var(--accent-soft);color:var(--accent)}
+.op .t.waste,.op .t.expense{background:var(--bad-soft);color:var(--bad)}
+.op .t.production{background:var(--dough);color:var(--ink)}
+.op .main{min-width:0}
+.op .main div:first-child{font-weight:600;overflow-wrap:anywhere}
+.op .main div:last-child{font-size:.78rem;color:var(--muted);overflow-wrap:anywhere}
+.op .r{text-align:right;font-family:var(--f-num);font-size:.88rem;display:flex;flex-direction:column;align-items:flex-end;gap:4px;white-space:nowrap}
+.x{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:.76rem;padding:2px 4px;text-decoration:underline;font-family:var(--f-body)}
+.x.sure{color:var(--bad);font-weight:700}
+.empty{color:var(--muted);text-align:center;padding:28px 12px;border:1px dashed var(--line);border-radius:var(--r)}
+.debt{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:8px;margin-bottom:6px}
+.debt div{min-width:0}
+.debt small{display:block;color:var(--muted)}
+.cat-row{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;align-items:end;padding-block:8px;border-bottom:1px solid var(--line)}
+.cat-row.ing{grid-template-columns:2fr .8fr 1fr 1.2fr auto}
+@media (max-width:560px){.cat-row,.cat-row.ing{grid-template-columns:1fr 1fr}.cat-row>:first-child{grid-column:1/-1}}
+.rec{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:10px}
+.stack{display:flex;flex-direction:column;gap:12px}
+@media (prefers-reduced-motion:no-preference){.toast{animation:pop .2s ease-out}@keyframes pop{from{opacity:0;transform:translate(-50%,8px)}}}
+
+html{-webkit-text-size-adjust:100%}
+body{margin:0;-webkit-tap-highlight-color:transparent}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.backup{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.filebtn{position:relative;overflow:hidden}
+.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="top">
+    <h1>Цех хинкали</h1>
+    <span class="sub" id="status">Загрузка…</span>
+  </header>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="home" aria-selected="true">Касса</button>
+    <button role="tab" data-tab="add" aria-selected="false">+ Записать</button>
+    <button role="tab" data-tab="stock" aria-selected="false">Остатки</button>
+    <button role="tab" data-tab="log" aria-selected="false">Журнал</button>
+    <button role="tab" data-tab="cat" aria-selected="false">Настройки</button>
+  </nav>
+  <noscript><div class="alert bad">Откройте приложение в Safari по ссылке — в предпросмотре файла оно не работает.</div></noscript>
+  <main id="view"></main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const view = $('#view');
+const S = {
+  tab:'home', db:null, canWrite:true,
+  catalog:{products:[],ingredients:[],recipes:{}},
+  ops:[], period:'today', from:'', to:'',
+  type:'order', channel:'retail', paid:true, wkind:'product', cashDir:'in',
+  buy:{}, lines:{}, make:{}, date:'',
+  confirmDel:null, recProd:null, busy:false
+};
+const OP_COL='ops', CAT_DOC='catalog/main';
+const GROUPS=['Тесто','Мясо','Сыр и молочное','Овощи и зелень','Специи','Прочее','Упаковка'];
+const EXP_CATS=['Аренда','Зарплата','Газ, свет, вода','Транспорт и доставка','Упаковка и хозтовары','Оборудование и ремонт','Другое'];
+const WASTE_R=['Брак (порвались, слиплись)','Просрочка','Не продали вовремя','Упало / испортилось','Другое'];
+
+/* ---------- helpers ---------- */
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const today=()=>iso(new Date());
+const nf=(n,d=0)=>(+n||0).toLocaleString('ru-RU',{minimumFractionDigits:d,maximumFractionDigits:d});
+const money=n=>nf(n,2)+' ₼';
+const sign=n=>(n>0?'+':n<0?'−':'')+nf(Math.abs(n),2)+' ₼';
+const qf=n=>{n=+n||0;return Math.abs(n-Math.round(n))<1e-9?nf(Math.round(n)):nf(n,2)};
+const r2=n=>Math.round((+n||0)*100)/100;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9);
+const prod=id=>S.catalog.products.find(p=>p.id===id);
+const ing=id=>S.catalog.ingredients.find(i=>i.id===id);
+const pName=id=>prod(id)?.name||'(удалённый вид)';
+const iName=id=>ing(id)?.name||'(удалённое сырьё)';
+const iUnit=id=>ing(id)?.unit||'';
+const dLabel=s=>{const t=today();if(s===t)return 'Сегодня';const y=new Date();y.setDate(y.getDate()-1);if(s===iso(y))return 'Вчера';const [Y,M,D]=s.split('-');return D+'.'+M+'.'+Y};
+function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2400)}
+const orderLines=o=>o.type==='order'?(o.lines||[]):o.type==='sale'?[{item:o.item,qty:o.qty,price:o.price}]:[];
+const isOrder=o=>o.type==='order'||o.type==='sale';
+const orderPaid=o=>o.type==='sale'?true:o.paid!==false;
+
+function periodRange(){
+  const t=today();
+  if(S.period==='today') return [t,t];
+  if(S.period==='yest'){const d=new Date();d.setDate(d.getDate()-1);const y=iso(d);return [y,y]}
+  if(S.period==='week'){const d=new Date();d.setDate(d.getDate()-6);return [iso(d),t]}
+  if(S.period==='month') return [t.slice(0,8)+'01',t];
+  if(S.period==='custom') return [S.from||'0000-01-01',S.to||'9999-12-31'];
+  return ['0000-01-01','9999-12-31'];
+}
+
+/* ---------- calculations ---------- */
+function calc(){
+  const [a,b]=periodRange(); const inP=d=>d>=a&&d<=b;
+  const C=S.catalog, rec=C.recipes||{};
+  const bq={},ba={},avg={};
+  for(const o of S.ops) if(o.type==='purchase'){bq[o.item]=(bq[o.item]||0)+ +o.qty;ba[o.item]=(ba[o.item]||0)+ +o.amount}
+  for(const i of C.ingredients) avg[i.id]=bq[i.id]?ba[i.id]/bq[i.id]:(+i.price||0);
+  const pc={};
+  for(const p of C.products){let c=0;const r=rec[p.id]||{};for(const k in r)c+=(+r[k]||0)/100*(avg[k]||0);pc[p.id]=c}
+  const P={},I={};
+  const eP=id=>P[id]||(P[id]={made:0,ret:0,whs:0,waste:0,rev:0,stock:0});
+  const eI=id=>I[id]||(I[id]={bought:0,spent:0,used:0,wasted:0,stock:0});
+  C.products.forEach(p=>eP(p.id)); C.ingredients.forEach(i=>eI(i.id));
+  const T={orders:0,ordersR:0,ordersW:0,rev:0,revR:0,revW:0,sold:0,soldR:0,soldW:0,made:0,waste:0,
+    buy:0,exp:0,expCat:{},cogs:0,wasteCost:0,cashNow:0,debt:0,debts:[],cashIn:0,cashOut:0};
+  for(const o of S.ops){
+    const p=inP(o.date), q=+o.qty||0;
+    if(o.type==='purchase'){const x=eI(o.item);x.stock+=q;T.cashNow-=+o.amount||0;if(p){x.bought+=q;x.spent+=+o.amount||0;T.buy+=+o.amount||0}}
+    else if(o.type==='production'){const x=eP(o.item);x.stock+=q;const r=rec[o.item]||{};
+      for(const k in r){const u=(+r[k]||0)/100*q;const y=eI(k);y.stock-=u;if(p)y.used+=u}
+      if(p){x.made+=q;T.made+=q}}
+    else if(isOrder(o)){
+      const amt=+o.amount||0, w=o.channel==='wholesale';
+      if(orderPaid(o)) T.cashNow+=amt; else {T.debt+=amt;T.debts.push(o)}
+      for(const l of orderLines(o)){const x=eP(l.item);x.stock-=+l.qty||0;
+        if(p){const lq=+l.qty||0,la=lq*(+l.price||0);x.rev+=la;T.sold+=lq;T.cogs+=lq*(pc[l.item]||0);
+          if(w){x.whs+=lq;T.soldW+=lq}else{x.ret+=lq;T.soldR+=lq}}}
+      if(p){T.orders++;T.rev+=amt;if(w){T.ordersW++;T.revW+=amt}else{T.ordersR++;T.revR+=amt}}
+    }
+    else if(o.type==='waste'){
+      if(o.kind==='ingredient'){const y=eI(o.item);y.stock-=q;if(p){y.wasted+=q;T.wasteCost+=q*(avg[o.item]||0)}}
+      else{const x=eP(o.item);x.stock-=q;if(p){x.waste+=q;T.waste+=q;T.wasteCost+=q*(pc[o.item]||0)}}}
+    else if(o.type==='expense'){T.cashNow-=+o.amount||0;if(p){T.exp+=+o.amount||0;T.expCat[o.category]=(T.expCat[o.category]||0)+(+o.amount||0)}}
+    else if(o.type==='cash'){const v=+o.amount||0;if(o.dir==='out'){T.cashNow-=v;if(p)T.cashOut+=v}else{T.cashNow+=v;if(p)T.cashIn+=v}}
+  }
+  T.result=T.rev-T.buy-T.exp;
+  T.profitCost=T.rev-T.cogs-T.wasteCost-T.exp;
+  return {P,I,T,pc,avg};
+}
+
+/* ---------- render ---------- */
+function render(){
+  $$('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===S.tab));
+  view.innerHTML = ({home:vHome,add:vAdd,stock:vStock,log:vLog,cat:vCat})[S.tab]();
+  if(S.tab==='add') refreshTotals();
+}
+
+function periodChips(){
+  const per=[['today','Сегодня'],['yest','Вчера'],['week','7 дней'],['month','Месяц'],['all','Всё время'],['custom','Даты…']];
+  let h=`<div class="chips">${per.map(([k,l])=>`<button class="chip" data-period="${k}" aria-pressed="${S.period===k}">${l}</button>`).join('')}</div>`;
+  if(S.period==='custom') h+=`<div class="range"><label class="f">С<input type="date" id="pFrom" value="${S.from}"></label><label class="f">По<input type="date" id="pTo" value="${S.to}"></label></div>`;
+  return h;
+}
+
+function vHome(){
+  const {P,T}=calc();
+  const hasEx=S.ops.some(o=>o.example);
+  let h='';
+  if(!S.ops.length) h+=`<div class="alert">С чего начать: нажмите «+ Записать» → «Касса» и положите сумму, которая сейчас на руках. Потом записывайте закупки, лепку и заказы. Цены и рецептуры можно поправить в «Настройках».</div>`;
+  if(hasEx) h+=`<div class="alert">Сейчас в программе примерные записи, чтобы было видно, как всё считается. Когда начнёте работать по-настоящему — <button class="x" data-act="clearEx">удалить примеры</button>.</div>`;
+  h+=`<div class="cash"><span class="l">В кассе сейчас</span><span class="v">${money(T.cashNow)}</span>
+    <span class="d">${T.debt?`Клиенты должны ещё ${money(T.debt)}`:'Долгов клиентов нет'}</span></div>
+  <div class="quick">
+    <button class="main" data-go="order">+ Заказ</button>
+    <button data-go="production">Лепка</button>
+    <button data-go="purchase">Закупка</button>
+    <button data-go="expense">Расход</button>
+  </div>`;
+  h+=periodChips();
+  const res=T.result;
+  h+=`<div class="result">
+    <div class="ln"><span>Выручка · ${nf(T.orders)} заказ${ending(T.orders)}</span><span class="plus">${sign(T.rev)}</span></div>
+    <div class="ln"><span>Закупки в маркете</span><span class="minus">${T.buy?sign(-T.buy):'0,00 ₼'}</span></div>
+    <div class="ln"><span>Другие расходы</span><span class="minus">${T.exp?sign(-T.exp):'0,00 ₼'}</span></div>
+    <div class="ln tot"><span>${res>=0?'В плюсе':'В минусе'}</span><span class="${res>=0?'plus':'minus'}">${sign(res)}</span></div>
+  </div>
+  <p class="note">«В плюсе / в минусе» — сколько пришло минус сколько потратили за период. Если закупили впрок, сегодня может быть минус, а продукты лежат на складе. Прибыль по себестоимости (сколько реально заработали на проданных хинкали): <b class="${T.profitCost>=0?'plus':'minus'}">${sign(T.profitCost)}</b>.</p>`;
+  const avgCheck=T.orders?T.rev/T.orders:0, ws=T.made?T.waste/T.made*100:0;
+  h+=`<h2>Продажи за период</h2><div class="kpis">
+    <div class="kpi"><span class="l">Заказов</span><span class="v">${nf(T.orders)}</span><span class="d">штучно ${T.ordersR} · опт ${T.ordersW}</span></div>
+    <div class="kpi"><span class="l">Продано, шт</span><span class="v">${nf(T.sold)}</span><span class="d">штучно ${nf(T.soldR)} · опт ${nf(T.soldW)}</span></div>
+    <div class="kpi"><span class="l">Средний чек</span><span class="v">${money(avgCheck)}</span><span class="d">опт ${money(T.revW)} всего</span></div>
+    <div class="kpi"><span class="l">Слеплено, шт</span><span class="v">${nf(T.made)}</span><span class="d">за период</span></div>
+    <div class="kpi"><span class="l">В мусор, шт</span><span class="v ${ws>5?'minus':''}">${nf(T.waste)}</span><span class="d">${nf(ws,1)}% · убыток ${money(T.wasteCost)}</span></div>
+  </div>`;
+  const rows=S.catalog.products.map(p=>[p,P[p.id]]).filter(([,x])=>x.made||x.ret||x.whs||x.waste);
+  if(rows.length){
+    h+=`<div class="tbl"><table><thead><tr><th>Вид</th><th>Слеплено</th><th>Штучно</th><th>Опт</th><th>Мусор</th><th>Выручка</th><th>Ср. цена</th></tr></thead><tbody>`;
+    for(const [p,x] of rows){const s=x.ret+x.whs;h+=`<tr><td>${esc(p.name)}</td><td class="n">${nf(x.made)}</td><td class="n">${nf(x.ret)}</td><td class="n">${nf(x.whs)}</td><td class="n">${x.waste?`<span class="pill bad">${nf(x.waste)}</span>`:'0'}</td><td class="n">${money(x.rev)}</td><td class="n">${s?money(x.rev/s):'—'}</td></tr>`}
+    h+=`</tbody></table></div>`;
+  }
+  const ec=Object.entries(T.expCat);
+  if(ec.length||T.buy){
+    h+=`<h2>Куда ушли деньги</h2><div class="result">${T.buy?`<div class="ln"><span>Продукты (маркет)</span><span>${money(T.buy)}</span></div>`:''}${ec.map(([k,v])=>`<div class="ln"><span>${esc(k)}</span><span>${money(v)}</span></div>`).join('')}</div>`;
+  }
+  if(T.debts.length){
+    h+=`<h2>Должны оплатить</h2>`;
+    for(const o of T.debts.sort((x,y)=>x.date<y.date?-1:1)) h+=`<div class="debt"><div><b>${esc(o.client||'Клиент без имени')}</b><small>${dLabel(o.date)} · ${orderLines(o).map(l=>nf(l.qty)+' шт').join(', ')}</small></div><div style="display:flex;gap:8px;align-items:center"><b style="font-family:var(--f-num)">${money(o.amount)}</b><button class="btn sm" data-paid="${o.id}">Оплатили</button></div></div>`;
+  }
+  return h;
+}
+const ending=n=>{n=Math.abs(n)%100;const n1=n%10;if(n>10&&n<20)return 'ов';if(n1===1)return '';if(n1>=2&&n1<=4)return 'а';return 'ов'};
+
+/* ----- add forms ----- */
+function vAdd(){
+  const C=S.catalog;
+  if(!C.products.length) return `<div class="empty">Нет видов хинкали. Добавьте их в «Настройках».</div>`;
+  const T=[['order','Заказ'],['production','Лепка'],['purchase','Закупка'],['expense','Расход'],['waste','В мусор'],['cash','Касса']];
+  let h=`<div class="types">${T.map(([k,l])=>`<button data-ftype="${k}" aria-pressed="${S.type===k}">${l}</button>`).join('')}</div>`;
+  h+=`<form id="opForm" class="form"><label class="f">Дата<input type="date" id="fDate" value="${S.date||today()}"></label>`;
+  if(S.type==='order') h+=fOrder();
+  else if(S.type==='production') h+=fProd();
+  else if(S.type==='purchase') h+=fBuy();
+  else if(S.type==='expense') h+=fExp();
+  else if(S.type==='waste') h+=fWaste();
+  else h+=fCash();
+  h+=`</form>`;
+  return h;
+}
+function fOrder(){
+  const w=S.channel==='wholesale';
+  let h=`<div class="seg"><button type="button" data-chan="retail" aria-pressed="${!w}">Штучно</button><button type="button" data-chan="wholesale" aria-pressed="${w}">Оптом</button></div>`;
+  for(const p of S.catalog.products){
+    const l=S.lines[p.id]||{}; const price=l.price??(w?p.wholesale:p.retail); const q=+l.qty||0;
+    h+=`<div class="pl ${q?'on':''}" id="pl-${p.id}"><div class="nm">${esc(p.name)}<div class="pr">цена ₼/шт <input type="number" step="any" min="0" inputmode="decimal" data-lprice="${p.id}" value="${price}"></div></div>
+    <div class="step"><button type="button" data-step="${p.id}" data-d="-1">−</button><input type="number" min="0" step="1" inputmode="numeric" data-lqty="${p.id}" value="${q||''}" placeholder="0"><button type="button" data-step="${p.id}" data-d="1">+</button></div></div>`;
+  }
+  h+=`<label class="f">Клиент ${w?'':'(необязательно)'}<input type="text" id="fClient" value="${esc(S.client||'')}" placeholder="${w?'Кафе, магазин…':'Можно оставить пустым'}"></label>
+  <div class="seg"><button type="button" data-paidsel="1" aria-pressed="${S.paid}">Оплачено сразу</button><button type="button" data-paidsel="0" aria-pressed="${!S.paid}">В долг</button></div>
+  <div class="bar"><div class="t">Сумма заказа<b id="tot">0 ₼</b></div><button class="btn" type="submit" id="go">Записать заказ</button></div>`;
+  return h;
+}
+function fProd(){
+  let h=`<p class="note" style="margin:0">Укажите, сколько слепили. Сырьё спишется само по рецептуре.</p>`;
+  for(const p of S.catalog.products){const q=+S.make[p.id]||0;
+    h+=`<div class="pl ${q?'on':''}" id="pm-${p.id}"><div class="nm">${esc(p.name)}</div><div class="step"><button type="button" data-mstep="${p.id}" data-d="-10">−</button><input type="number" min="0" step="1" inputmode="numeric" data-mqty="${p.id}" value="${q||''}" placeholder="0"><button type="button" data-mstep="${p.id}" data-d="10">+</button></div></div>`}
+  h+=`<div class="preview" id="preview" hidden></div><div class="bar"><div class="t">Всего слеплено<b id="tot">0 шт</b></div><button class="btn" type="submit" id="go">Хинкали готовы</button></div>`;
+  return h;
+}
+function fBuy(){
+  let h=`<p class="note" style="margin:0">Отметьте, что купили. Цена запомнится на следующий раз.</p>`;
+  const ings=S.catalog.ingredients;
+  for(const g of [...GROUPS,...new Set(ings.map(i=>i.group).filter(x=>!GROUPS.includes(x)))]){
+    const list=ings.filter(i=>(i.group||'Прочее')===g); if(!list.length) continue;
+    h+=`<div class="grp">${esc(g)}</div>`;
+    for(const i of list){const b=S.buy[i.id];const on=!!b;
+      h+=`<div class="item ${on?'on':''}"><div class="hd" data-buyon="${i.id}"><input type="checkbox" tabindex="-1" ${on?'checked':''} aria-label="${esc(i.name)}"><span class="nm">${esc(i.name)}</span><span class="lp">${i.price?money(i.price)+'/'+i.unit:''}</span></div>`;
+      if(on) h+=`<div class="bd"><label class="f">Сколько, ${i.unit}<input type="number" step="any" min="0" inputmode="decimal" data-bqty="${i.id}" value="${b.qty??''}" placeholder="0"></label><label class="f">Цена за ${i.unit}, ₼<input type="number" step="any" min="0" inputmode="decimal" data-bprice="${i.id}" value="${b.price??''}"></label><span class="sum" id="bs-${i.id}"></span></div>`;
+      h+=`</div>`}
+  }
+  h+=`<div class="bar"><div class="t">Потрачено в маркете<b id="tot">0 ₼</b></div><button class="btn" type="submit" id="go">Записать закупку</button></div>`;
+  return h;
+}
+function fExp(){
+  return `<label class="f">На что<select id="fCat">${EXP_CATS.map(c=>`<option>${c}</option>`).join('')}</select></label>
+  <label class="f">Сумма, ₼<input type="number" id="fAmt" step="any" min="0" inputmode="decimal" placeholder="0"></label>
+  <label class="f">Комментарий (необязательно)<input type="text" id="fNote" placeholder="Например: аренда за октябрь"></label>
+  <button class="btn" type="submit" id="go">Записать расход</button>`;
+}
+function fWaste(){
+  const ingr=S.wkind==='ingredient', C=S.catalog;
+  const list=ingr?C.ingredients:C.products;
+  return `<div class="seg"><button type="button" data-wkind="product" aria-pressed="${!ingr}">Готовые хинкали</button><button type="button" data-wkind="ingredient" aria-pressed="${ingr}">Продукты</button></div>
+  <label class="f">Что выбросили<select id="fItem">${list.map(x=>`<option value="${x.id}">${esc(x.name)}${ingr?' ('+x.unit+')':''}</option>`).join('')}</select></label>
+  <div class="row"><label class="f">Сколько${ingr?'':', шт'}<input type="number" id="fQty" step="any" min="0" inputmode="decimal" placeholder="0"></label>
+  <label class="f">Причина<select id="fReason">${WASTE_R.map(r=>`<option>${r}</option>`).join('')}</select></label></div>
+  <button class="btn" type="submit" id="go">Записать в убыток</button>`;
+}
+function fCash(){
+  const out=S.cashDir==='out';
+  return `<div class="seg"><button type="button" data-cdir="in" aria-pressed="${!out}">Положить в кассу</button><button type="button" data-cdir="out" aria-pressed="${out}">Забрать из кассы</button></div>
+  <label class="f">Сумма, ₼<input type="number" id="fAmt" step="any" min="0" inputmode="decimal" placeholder="0"></label>
+  <label class="f">Комментарий<input type="text" id="fNote" placeholder="${out?'Например: забрал себе':'Например: начальный остаток'}"></label>
+  <p class="note" style="margin:0">Здесь — только движение денег без продажи и покупки: стартовая сумма, вложили свои, забрали себе.</p>
+  <button class="btn" type="submit" id="go">${out?'Забрать':'Положить'}</button>`;
+}
+
+function refreshTotals(){
+  const tot=$('#tot'), go=$('#go');
+  if(S.type==='order'){let s=0,n=0;for(const p of S.catalog.products){const l=S.lines[p.id];if(!l)continue;const q=+l.qty||0;const pr=l.price??(S.channel==='wholesale'?p.wholesale:p.retail);s+=q*(+pr||0);n+=q;$('#pl-'+p.id)?.classList.toggle('on',q>0)}
+    if(tot) tot.textContent=money(s)+(n?' · '+nf(n)+' шт':''); if(go) go.disabled=!n}
+  else if(S.type==='production'){let n=0;const use={};const rec=S.catalog.recipes||{};
+    for(const p of S.catalog.products){const q=+S.make[p.id]||0;n+=q;$('#pm-'+p.id)?.classList.toggle('on',q>0);const r=rec[p.id]||{};for(const k in r)use[k]=(use[k]||0)+(+r[k]||0)/100*q}
+    if(tot) tot.textContent=nf(n)+' шт'; if(go) go.disabled=!n;
+    const pv=$('#preview'); const ks=Object.keys(use).filter(k=>use[k]>0);
+    if(pv){pv.hidden=!ks.length;pv.innerHTML='Спишется: '+ks.map(k=>`${esc(iName(k))} <b>${qf(use[k])}</b> ${iUnit(k)}`).join(' · ')}}
+  else if(S.type==='purchase'){let s=0,n=0;for(const id in S.buy){const b=S.buy[id];const v=(+b.qty||0)*(+b.price||0);s+=v;if(+b.qty>0)n++;const el=$('#bs-'+id);if(el)el.textContent=v?money(v):''}
+    if(tot) tot.textContent=money(s)+(n?' · '+n+' поз.':''); if(go) go.disabled=!n}
+}
+
+/* ----- stock ----- */
+function vStock(){
+  const {P,I,pc}=calc();
+  let h=`<h2>Готовые хинкали</h2><div class="tbl"><table><thead><tr><th>Вид</th><th>Осталось</th><th>Себест./шт</th><th>Цена штучно</th></tr></thead><tbody>`;
+  for(const p of S.catalog.products){const x=P[p.id];h+=`<tr><td>${esc(p.name)}</td><td class="n">${x.stock<0?`<span class="pill bad">${nf(x.stock)}</span>`:`<b>${nf(x.stock)}</b> шт`}</td><td class="n">${pc[p.id]?money(pc[p.id]):'—'}</td><td class="n">${money(p.retail)}</td></tr>`}
+  h+=`</tbody></table></div><p class="note">Себестоимость — по рецептуре и средней цене, по которой вы покупали продукты.</p>`;
+  h+=`<h2>Продукты на складе</h2><div class="tbl"><table><thead><tr><th>Продукт</th><th>Осталось</th><th>Хватит на</th></tr></thead><tbody>`;
+  const rec=S.catalog.recipes||{};
+  for(const i of S.catalog.ingredients){const x=I[i.id];
+    let per=0;for(const pid in rec){const v=+rec[pid]?.[i.id]||0;if(v>per)per=v}
+    const pcs=per&&x.stock>0?Math.floor(x.stock/per*100):null;
+    if(!x.stock&&!per) continue;
+    const st=x.stock<-1e-9?`<span class="pill bad">${qf(x.stock)} ${i.unit}</span>`:(x.stock<1e-9?`<span class="pill warn">нет</span>`:`<b>${qf(x.stock)}</b> ${i.unit}`);
+    h+=`<tr><td>${esc(i.name)}</td><td class="n">${st}</td><td class="n">${pcs!=null?'~'+nf(pcs)+' шт':'—'}</td></tr>`}
+  h+=`</tbody></table></div><p class="note">Красный минус значит, что слепили больше, чем записано в закупках — проверьте, всё ли купленное внесли. «Хватит на» — примерно, по самому «прожорливому» виду.</p>`;
+  return h;
+}
+
+/* ----- log ----- */
+function vLog(){
+  if(!S.ops.length) return `<div class="empty">Записей пока нет. Нажмите «+ Записать».</div>`;
+  const by={}; for(const o of S.ops)(by[o.date]=by[o.date]||[]).push(o);
+  const L={order:'Заказ',sale:'Заказ',production:'Лепка',purchase:'Закупка',expense:'Расход',waste:'Мусор',cash:'Касса'};
+  let h='';
+  for(const d of Object.keys(by).sort().reverse()){
+    const day=by[d]; const rev=day.filter(isOrder).reduce((s,o)=>s+(+o.amount||0),0);
+    h+=`<div class="day"><h3><span>${dLabel(d)}</span><span>${rev?'выручка '+money(rev):''}</span></h3>`;
+    for(const o of day.sort((x,y)=>(y.ts||0)-(x.ts||0))){
+      let name='',sub='',right='';
+      if(isOrder(o)){const ls=orderLines(o);name=ls.map(l=>`${pName(l.item).replace('Хинкали ','')} × ${nf(l.qty)}`).join(', ');
+        sub=(o.channel==='wholesale'?'Опт':'Штучно')+(o.client?' · '+esc(o.client):'')+(orderPaid(o)?'':' · <b class="minus">в долг</b>');right=money(o.amount)}
+      else if(o.type==='purchase'){name=iName(o.item);sub=`${qf(o.qty)} ${iUnit(o.item)} × ${money(o.price??o.amount/o.qty)}`;right='−'+money(o.amount)}
+      else if(o.type==='production'){name=pName(o.item);right=nf(o.qty)+' шт'}
+      else if(o.type==='expense'){name=o.category;sub=esc(o.note||'');right='−'+money(o.amount)}
+      else if(o.type==='waste'){name=o.kind==='ingredient'?iName(o.item):pName(o.item);sub=esc(o.reason||'');right=qf(o.qty)+' '+(o.kind==='ingredient'?iUnit(o.item):'шт')}
+      else if(o.type==='cash'){name=o.dir==='out'?'Забрали из кассы':'Положили в кассу';sub=esc(o.note||'');right=(o.dir==='out'?'−':'+')+money(o.amount)}
+      if(o.example) sub+=(sub?' · ':'')+'пример';
+      const sure=S.confirmDel===o.id;
+      h+=`<div class="op"><span class="t ${o.type==='sale'?'order':o.type}">${L[o.type]||o.type}</span><div class="main"><div>${esc(name)}</div><div>${sub}</div></div><div class="r"><span>${right}</span><button class="x ${sure?'sure':''}" data-del="${o.id}">${sure?'Точно удалить?':'удалить'}</button></div></div>`;
+    }
+    h+=`</div>`;
+  }
+  return h;
+}
+
+/* ----- catalog ----- */
+function vCat(){
+  const C=S.catalog;
+  let h=`<div class="stack"><div class="card"><h2>Виды хинкали и цены</h2>`;
+  for(const p of C.products) h+=`<div class="cat-row" data-pid="${p.id}"><label class="f">Название<input data-k="name" value="${esc(p.name)}"></label><label class="f">Штучно, ₼<input type="number" step="any" data-k="retail" value="${p.retail}"></label><label class="f">Опт, ₼/шт<input type="number" step="any" data-k="wholesale" value="${p.wholesale}"></label><button class="btn ghost sm" data-rmp="${p.id}" type="button">Убрать</button></div>`;
+  h+=`<p style="margin:10px 0 0"><button class="btn ghost" data-act="addP" type="button">+ Вид хинкали</button></p></div>`;
+  h+=`<div class="card"><h2>Продукты и цены</h2><p class="note" style="margin-top:-4px">Цена обновляется сама после каждой закупки.</p>`;
+  for(const i of C.ingredients) h+=`<div class="cat-row ing" data-iid="${i.id}"><label class="f">Название<input data-k="name" value="${esc(i.name)}"></label><label class="f">Ед.<select data-k="unit">${['кг','л','шт','пучок','уп'].map(u=>`<option ${u===i.unit?'selected':''}>${u}</option>`).join('')}</select></label><label class="f">Цена, ₼<input type="number" step="any" data-k="price" value="${i.price??''}"></label><label class="f">Раздел<select data-k="group">${GROUPS.map(g=>`<option ${g===(i.group||'Прочее')?'selected':''}>${g}</option>`).join('')}</select></label><button class="btn ghost sm" data-rmi="${i.id}" type="button">Убрать</button></div>`;
+  h+=`<p style="margin:10px 0 0"><button class="btn ghost" data-act="addI" type="button">+ Продукт</button></p></div>`;
+  const sel=S.recProd&&prod(S.recProd)?S.recProd:C.products[0]?.id;
+  h+=`<div class="card"><h2>Рецептура на 100 штук</h2><p class="note" style="margin-top:-4px">Сколько продуктов уходит на 100 хинкали. Пустое поле — продукт не нужен.</p>`;
+  if(sel){h+=`<label class="f" style="margin-top:10px">Вид<select id="recSel">${C.products.map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(p.name)}</option>`).join('')}</select></label><div class="rec">`;
+    const r=C.recipes?.[sel]||{};
+    for(const i of C.ingredients){if(i.group==='Упаковка')continue;h+=`<label class="f">${esc(i.name)}, ${i.unit}<input type="number" step="any" min="0" data-rec="${i.id}" value="${r[i.id]??''}" placeholder="—"></label>`}
+    h+=`</div>`}
+  h+=`</div><button class="btn" data-act="saveCat" type="button">Сохранить настройки</button>`;
+  const days=S.lastBackup?Math.round((new Date(today())-new Date(S.lastBackup))/864e5):null;
+  h+=`<div class="card"><h2>Резервная копия</h2><p class="note" style="margin-top:-4px">Все записи хранятся только в этом телефоне. Раз в неделю сохраняйте копию в «Файлы», Telegram или WhatsApp — если телефон потеряется или сломается, учёт можно будет восстановить на новом. ${S.lastBackup?'Последняя копия: '+(days===0?'сегодня':days+' дн. назад')+'.':'<b>Копию ещё не делали.</b>'}</p>
+  <div class="backup"><button class="btn" data-act="backup" type="button">Сохранить копию</button><label class="btn ghost filebtn">Восстановить из копии<input type="file" id="restoreFile" accept=".json,application/json"></label></div>`;
+  if(S.pendingRestore){const d=S.pendingRestore;h+=`<div class="alert bad" style="margin-top:10px">В копии ${d.ops.length} записей от ${esc((d.saved||'').slice(0,10))}. Текущие данные на телефоне (${S.ops.length} записей) будут заменены. <button class="btn sm" data-act="doRestore" type="button">Заменить</button> <button class="x" data-act="noRestore" type="button">Отмена</button></div>`}
+  h+=`</div>`;
+  if(S.ops.some(o=>o.example)) h+=`<button class="btn ghost" data-act="clearEx" type="button">Удалить примерные записи</button>`;
+  h+=`</div>`;
+  return h;
+}
+function readCatDom(){
+  const C=JSON.parse(JSON.stringify(S.catalog));
+  $$('[data-pid]').forEach(r=>{const p=C.products.find(x=>x.id===r.dataset.pid);if(!p)return;
+    p.name=r.querySelector('[data-k=name]').value.trim()||'Без названия';p.retail=+r.querySelector('[data-k=retail]').value||0;p.wholesale=+r.querySelector('[data-k=wholesale]').value||0});
+  $$('[data-iid]').forEach(r=>{const i=C.ingredients.find(x=>x.id===r.dataset.iid);if(!i)return;
+    i.name=r.querySelector('[data-k=name]').value.trim()||'Без названия';i.unit=r.querySelector('[data-k=unit]').value;i.group=r.querySelector('[data-k=group]').value;const pr=r.querySelector('[data-k=price]').value;i.price=pr===''?null:+pr});
+  const sel=$('#recSel')?.value;
+  if(sel){const r={};$$('[data-rec]').forEach(x=>{const v=+x.value;if(v)r[x.dataset.rec]=v});C.recipes=C.recipes||{};C.recipes[sel]=r}
+  return C;
+}
+
+/* ---------- persistence (в памяти телефона) ---------- */
+const KEY='khinkali.data.v1';
+const DEFAULT_CATALOG={"products": [{"id": "pb", "name": "Хинкали с говядиной", "retail": 1.5, "wholesale": 1.1}, {"id": "pl", "name": "Хинкали с бараниной", "retail": 1.6, "wholesale": 1.2}, {"id": "pmx", "name": "Хинкали мясные (говядина + баранина)", "retail": 1.5, "wholesale": 1.1}, {"id": "pc", "name": "Хинкали с сыром", "retail": 1.2, "wholesale": 0.85}, {"id": "pg", "name": "Хинкали с грибами", "retail": 1, "wholesale": 0.7}, {"id": "ppt", "name": "Хинкали с картофелем", "retail": 0.8, "wholesale": 0.55}], "ingredients": [{"id": "if", "name": "Мука высший сорт", "unit": "кг", "price": 1.1, "group": "Тесто"}, {"id": "isa", "name": "Соль", "unit": "кг", "price": 0.6, "group": "Тесто"}, {"id": "ib", "name": "Говядина", "unit": "кг", "price": 17, "group": "Мясо"}, {"id": "il", "name": "Баранина", "unit": "кг", "price": 19, "group": "Мясо"}, {"id": "is", "name": "Сыр сулугуни", "unit": "кг", "price": 12, "group": "Сыр и молочное"}, {"id": "ii", "name": "Сыр имеретинский", "unit": "кг", "price": 11, "group": "Сыр и молочное"}, {"id": "ibt", "name": "Масло сливочное", "unit": "кг", "price": 14, "group": "Сыр и молочное"}, {"id": "io", "name": "Лук репчатый", "unit": "кг", "price": 0.9, "group": "Овощи и зелень"}, {"id": "igr", "name": "Чеснок", "unit": "кг", "price": 5, "group": "Овощи и зелень"}, {"id": "ipt", "name": "Картофель", "unit": "кг", "price": 0.8, "group": "Овощи и зелень"}, {"id": "im", "name": "Шампиньоны", "unit": "кг", "price": 6, "group": "Овощи и зелень"}, {"id": "ik", "name": "Кинза", "unit": "пучок", "price": 0.4, "group": "Овощи и зелень"}, {"id": "ipe", "name": "Петрушка", "unit": "пучок", "price": 0.4, "group": "Овощи и зелень"}, {"id": "ibp", "name": "Перец чёрный молотый", "unit": "кг", "price": 20, "group": "Специи"}, {"id": "irp", "name": "Перец красный молотый", "unit": "кг", "price": 16, "group": "Специи"}, {"id": "izi", "name": "Зира", "unit": "кг", "price": 24, "group": "Специи"}, {"id": "ich", "name": "Чабер", "unit": "кг", "price": 25, "group": "Специи"}, {"id": "ihs", "name": "Хмели-сунели", "unit": "кг", "price": 18, "group": "Специи"}, {"id": "ioil", "name": "Масло растительное", "unit": "л", "price": 3.5, "group": "Прочее"}, {"id": "ibag", "name": "Пакеты для заморозки", "unit": "шт", "price": 0.05, "group": "Упаковка"}, {"id": "ibox", "name": "Лотки / контейнеры", "unit": "шт", "price": 0.25, "group": "Упаковка"}, {"id": "igl", "name": "Перчатки", "unit": "уп", "price": 4, "group": "Упаковка"}], "recipes": {"pb": {"if": 3.5, "ib": 4, "io": 1, "igr": 0.05, "ik": 3, "isa": 0.1, "ibp": 0.02, "izi": 0.02}, "pl": {"if": 3.5, "il": 4, "io": 1, "ik": 3, "isa": 0.1, "ibp": 0.02, "izi": 0.03, "ich": 0.01}, "pmx": {"if": 3.5, "ib": 2, "il": 2, "io": 1, "igr": 0.05, "ik": 3, "isa": 0.1, "ibp": 0.02, "izi": 0.02, "ihs": 0.01}, "pc": {"if": 3.5, "is": 2, "ii": 2, "ibt": 0.3, "isa": 0.03}, "pg": {"if": 3.5, "im": 4, "io": 1, "ioil": 0.2, "ik": 2, "isa": 0.08, "ibp": 0.02}, "ppt": {"if": 3.5, "ipt": 4, "io": 0.8, "ibt": 0.3, "isa": 0.08, "ibp": 0.02}}};
+let storageOk=true;
+function persist(){
+  try{localStorage.setItem(KEY,JSON.stringify({v:1,catalog:S.catalog,ops:S.ops,lastBackup:S.lastBackup||null}));storageOk=true}
+  catch(e){storageOk=false;toast('Память телефона не сохранила данные. Сделайте резервную копию.')}
+}
+function load(){
+  try{const raw=localStorage.getItem(KEY);if(raw){const d=JSON.parse(raw);S.catalog=d.catalog||JSON.parse(JSON.stringify(DEFAULT_CATALOG));S.ops=Array.isArray(d.ops)?d.ops:[];S.lastBackup=d.lastBackup||null;return}}
+  catch(e){storageOk=false}
+  S.catalog=JSON.parse(JSON.stringify(DEFAULT_CATALOG));S.ops=[];
+}
+async function saveCatalog(C,silent){S.catalog=C;persist();if(!silent){toast('Настройки сохранены');render()}return true}
+async function addOps(list){const base=Date.now();list.forEach((o,k)=>{o.id=o.id||uid();o.ts=base+k;S.ops.push(o)});persist();return true}
+async function delOp(id){S.ops=S.ops.filter(o=>o.id!==id);persist()}
+async function markPaid(id){const o=S.ops.find(x=>x.id===id);if(!o)return;o.paid=true;o.paidDate=today();persist();toast('Оплата записана — деньги в кассе')}
+
+/* ---------- резервная копия ---------- */
+async function makeBackup(){
+  const data=JSON.stringify({app:'khinkali',v:1,saved:new Date().toISOString(),catalog:S.catalog,ops:S.ops},null,1);
+  const name='hinkali-kopiya-'+today()+'.json';
+  const file=new File([data],name,{type:'application/json'});
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'Копия учёта хинкали'})}
+    else{const url=URL.createObjectURL(file);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000)}
+    S.lastBackup=today();persist();toast('Копия сохранена');render();
+  }catch(e){if(e&&e.name==='AbortError')return;toast('Не получилось сохранить копию')}
+}
+function restoreBackup(file){
+  const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(d.app!=='khinkali'||!Array.isArray(d.ops))throw 0;
+    S.pendingRestore=d;render();}catch(e){toast('Это не файл копии учёта хинкали')}};
+  r.readAsText(file);
+}
+/* ---------- events ---------- */
+$('nav.tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(!b)return;
+  if(S.tab==='cat'&&b.dataset.tab!=='cat') S.catalog=readCatDom();
+  S.tab=b.dataset.tab;S.confirmDel=null;render();window.scrollTo(0,0)});
+
+view.addEventListener('click',async e=>{
+  const hd=e.target.closest('[data-buyon]');
+  if(hd){const id=hd.dataset.buyon;if(S.buy[id])delete S.buy[id];else S.buy[id]={qty:'',price:ing(id)?.price??''};render();setTimeout(()=>$(`[data-bqty="${id}"]`)?.focus(),0);return}
+  const t=e.target.closest('button');if(!t)return;
+  const d=t.dataset;
+  if(d.period){S.period=d.period;return render()}
+  if(d.go){S.type=d.go;S.tab='add';render();window.scrollTo(0,0);return}
+  if(d.ftype){S.type=d.ftype;return render()}
+  if(d.chan){if(S.channel!==d.chan){S.channel=d.chan;for(const k in S.lines)delete S.lines[k].price}return render()}
+  if(d.paidsel){S.paid=d.paidsel==='1';return render()}
+  if(d.wkind){S.wkind=d.wkind;return render()}
+  if(d.cdir){S.cashDir=d.cdir;return render()}
+  if(d.step){const id=d.step;const l=S.lines[id]||(S.lines[id]={});l.qty=Math.max(0,(+l.qty||0)+ +d.d);const inp=$(`[data-lqty="${id}"]`);if(inp)inp.value=l.qty||'';return refreshTotals()}
+  if(d.mstep){const id=d.mstep;S.make[id]=Math.max(0,(+S.make[id]||0)+ +d.d);const inp=$(`[data-mqty="${id}"]`);if(inp)inp.value=S.make[id]||'';return refreshTotals()}
+  if(d.del){if(S.confirmDel!==d.del){S.confirmDel=d.del;return render()}S.confirmDel=null;await delOp(d.del);toast('Запись удалена');return render()}
+  if(d.paid){await markPaid(d.paid);return render()}
+  if(d.rmp){const C=readCatDom();C.products=C.products.filter(p=>p.id!==d.rmp);S.catalog=C;return render()}
+  if(d.rmi){const C=readCatDom();C.ingredients=C.ingredients.filter(p=>p.id!==d.rmi);S.catalog=C;return render()}
+  const a=d.act;
+  if(a==='addP'){const C=readCatDom();C.products.push({id:'p'+uid(),name:'Новый вид',retail:1,wholesale:0.7});S.catalog=C;return render()}
+  if(a==='addI'){const C=readCatDom();C.ingredients.push({id:'i'+uid(),name:'Новый продукт',unit:'кг',price:null,group:'Прочее'});S.catalog=C;return render()}
+  if(a==='saveCat') return saveCatalog(readCatDom());
+  if(a==='backup') return makeBackup();
+  if(a==='doRestore'){const d=S.pendingRestore;S.pendingRestore=null;S.catalog=d.catalog||S.catalog;S.ops=d.ops;persist();toast('Данные восстановлены');return render()}
+  if(a==='noRestore'){S.pendingRestore=null;return render()}
+  if(a==='clearEx'){if(S.confirmDel!=='__ex'){S.confirmDel='__ex';t.textContent='Точно удалить все примеры?';t.classList.add('sure');return}
+    S.confirmDel=null;for(const o of S.ops.filter(o=>o.example))await delOp(o.id);toast('Примеры удалены — можно работать');return render()}
+});
+
+view.addEventListener('input',e=>{
+  const d=e.target.dataset;
+  if(d.lqty){(S.lines[d.lqty]=S.lines[d.lqty]||{}).qty=e.target.value;return refreshTotals()}
+  if(d.lprice){(S.lines[d.lprice]=S.lines[d.lprice]||{}).price=e.target.value===''?0:+e.target.value;return refreshTotals()}
+  if(d.mqty){S.make[d.mqty]=e.target.value;return refreshTotals()}
+  if(d.bqty){S.buy[d.bqty].qty=e.target.value;return refreshTotals()}
+  if(d.bprice){S.buy[d.bprice].price=e.target.value;return refreshTotals()}
+  if(e.target.id==='fClient') S.client=e.target.value;
+});
+view.addEventListener('change',e=>{
+  if(e.target.id==='recSel'){S.catalog=readCatDom();S.recProd=e.target.value;return render()}
+  if(e.target.id==='pFrom'){S.from=e.target.value;return render()}
+  if(e.target.id==='pTo'){S.to=e.target.value;return render()}
+  if(e.target.id==='fDate') S.date=e.target.value;
+  if(e.target.id==='restoreFile'&&e.target.files[0]) restoreBackup(e.target.files[0]);
+});
+
+view.addEventListener('submit',async e=>{
+  e.preventDefault(); if(S.busy) return;
+  const date=$('#fDate').value||today(); S.date=date===today()?'':date;
+  let list=[], msg='';
+  if(S.type==='order'){
+    const lines=[];for(const p of S.catalog.products){const l=S.lines[p.id];const q=+l?.qty||0;if(q>0)lines.push({item:p.id,qty:q,price:+(l.price??(S.channel==='wholesale'?p.wholesale:p.retail))||0})}
+    if(!lines.length) return toast('Добавьте хотя бы одну позицию');
+    const amount=r2(lines.reduce((s,l)=>s+l.qty*l.price,0));
+    const o={type:'order',date,channel:S.channel,lines,amount,paid:S.paid};const c=$('#fClient').value.trim();if(c)o.client=c;
+    if(!S.paid&&!c) return toast('Для долга укажите клиента');
+    list=[o];msg='Заказ записан: '+money(amount);
+  } else if(S.type==='production'){
+    for(const p of S.catalog.products){const q=+S.make[p.id]||0;if(q>0)list.push({type:'production',date,item:p.id,qty:q})}
+    if(!list.length) return toast('Укажите количество');
+    msg='Слеплено '+nf(list.reduce((s,o)=>s+o.qty,0))+' шт';
+  } else if(S.type==='purchase'){
+    const trip=uid();
+    for(const id in S.buy){const b=S.buy[id];const q=+b.qty||0;if(q<=0)continue;const pr=+b.price||0;list.push({type:'purchase',date,item:id,qty:q,price:pr,amount:r2(q*pr),trip})}
+    if(!list.length) return toast('Укажите, сколько купили');
+    msg='Закупка записана: '+money(list.reduce((s,o)=>s+o.amount,0));
+  } else if(S.type==='expense'){
+    const amt=+$('#fAmt').value;if(!(amt>0))return toast('Укажите сумму');
+    list=[{type:'expense',date,category:$('#fCat').value,amount:r2(amt),note:$('#fNote').value.trim()}];msg='Расход записан';
+  } else if(S.type==='waste'){
+    const q=+$('#fQty').value;if(!(q>0))return toast('Укажите количество');
+    list=[{type:'waste',date,kind:S.wkind,item:$('#fItem').value,qty:q,reason:$('#fReason').value}];msg='Записано в убыток';
+  } else {
+    const amt=+$('#fAmt').value;if(!(amt>0))return toast('Укажите сумму');
+    list=[{type:'cash',date,dir:S.cashDir,amount:r2(amt),note:$('#fNote').value.trim()}];msg=S.cashDir==='out'?'Деньги забраны из кассы':'Деньги в кассе';
+  }
+  S.busy=true;
+  const ok=await addOps(list);
+  if(ok&&S.type==='purchase'){const C=JSON.parse(JSON.stringify(S.catalog));let ch=false;
+    for(const o of list){const i=C.ingredients.find(x=>x.id===o.item);if(i&&o.price&&i.price!==o.price){i.price=o.price;ch=true}}
+    if(ch) await saveCatalog(C,true);}
+  S.busy=false;
+  if(ok){S.lines={};S.make={};S.buy={};S.client='';S.paid=true;toast(msg);render()}
+});
+
+/* ---------- boot ---------- */
+load();
+const st=$('#status');
+st.textContent=storageOk?'Данные хранятся в этом телефоне':'Память недоступна — откройте в Safari';
+render();
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(_){}
+if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+})();
+</script>
+
+</body>
+</html>
