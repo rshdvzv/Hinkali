@@ -155,6 +155,11 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 .hdr-r{display:flex;align-items:center;gap:10px}
 
 .btn.danger{background:var(--bad);color:var(--bg)}
+.calc{display:grid;gap:2px}
+.calc .cl{display:flex;justify-content:space-between;gap:10px;margin-top:6px}
+.calc .cl b{font-family:var(--f-num)}
+.cs{font-size:.8rem;color:var(--muted);text-align:right}
+.cs.plus{color:var(--good)} .cs.minus{color:var(--bad)}
 .langbtn{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 .8rem var(--f-body);padding:6px 10px;border-radius:8px;cursor:pointer}
 </style>
 </head>
@@ -202,7 +207,8 @@ const AZ={
 'Дата':'Tarix','Оптом':'Topdan','цена ₼/шт':'qiymət ₼/əd.','Клиент':'Müştəri','Клиент (необязательно)':'Müştəri (vacib deyil)','Кафе, магазин…':'Kafe, mağaza…','Можно оставить пустым':'Boş qala bilər',
 'Оплачено сразу':'Dərhal ödənildi','В долг':'Borca','Сумма заказа':'Sifariş məbləği','Записать заказ':'Sifarişi yaz',
 'Укажите, сколько слепили. Сырьё спишется само по рецептуре.':'Neçə ədəd hazırlandığını yazın. Ərzaq reseptə görə özü silinəcək.',
-'Всего слеплено':'Cəmi hazırlanıb','Хинкали готовы':'Xinkal hazırdır','Спишется:':'Silinəcək:',
+'Всего слеплено':'Cəmi hazırlanıb','Обойдутся (себестоимость)':'Maya dəyəri','1 шт ≈ {0}':'1 əd. ≈ {0}','Продадите штучно':'Ədədlə satsanız','Продадите оптом':'Topdan satsanız','заработок {0}':'qazanc {0}',
+'Себестоимость 0 — проверьте рецепт и цены продуктов в «Настройках».':'Maya dəyəri 0-dır — «Ayarlar»da resepti və ərzaq qiymətlərini yoxlayın.','Хинкали готовы':'Xinkal hazırdır','Спишется:':'Silinəcək:',
 'Отметьте, что купили. Цена запомнится на следующий раз.':'Nə aldığınızı qeyd edin. Qiymət növbəti dəfə üçün yadda qalacaq.',
 'Сколько, {0}':'Miqdar, {0}','Цена за {0}, ₼':'{0} qiyməti, ₼','Потрачено в маркете':'Marketdə xərclənib','Записать закупку':'Alışı yaz','{0} поз.':'{0} mövqe',
 'На что':'Nəyə','Сумма, ₼':'Məbləğ, ₼','Комментарий (необязательно)':'Şərh (vacib deyil)','Например: аренда за октябрь':'Məsələn: oktyabr icarəsi','Записать расход':'Xərci yaz',
@@ -497,7 +503,19 @@ function refreshTotals(){
     for(const p of S.catalog.products){const q=+S.make[p.id]||0;n+=q;$('#pm-'+p.id)?.classList.toggle('on',q>0);const r=rec[p.id]||{};for(const k in r)use[k]=(use[k]||0)+(+r[k]||0)/100*q}
     if(tot) tot.textContent=nf(n)+' '+t('шт'); if(go) go.disabled=!n;
     const pv=$('#preview'); const ks=Object.keys(use).filter(k=>use[k]>0);
-    if(pv){pv.hidden=!ks.length;pv.innerHTML=t('Спишется:')+' '+ks.map(k=>`${esc(iName(k))} <b>${qf(use[k])}</b> ${iUnit(k)}`).join(' · ')}}
+    if(pv){
+      const {pc}=calc(); let cost=0,rr=0,rw=0;
+      for(const p of S.catalog.products){const q=+S.make[p.id]||0;if(!q)continue;cost+=q*(pc[p.id]||0);rr+=q*(+p.retail||0);rw+=q*(+p.wholesale||0)}
+      let h='';
+      if(n){
+        h+=`<div class="calc"><div class="cl"><span>${t('Обойдутся (себестоимость)')}</span><b>${money(cost)}</b></div><div class="cs">${t('1 шт ≈ {0}',money(cost/n))}</div>
+        <div class="cl"><span>${t('Продадите штучно')}</span><b>${money(rr)}</b></div><div class="cs ${rr-cost>=0?'plus':'minus'}">${t('заработок {0}',sign(rr-cost))}</div>
+        <div class="cl"><span>${t('Продадите оптом')}</span><b>${money(rw)}</b></div><div class="cs ${rw-cost>=0?'plus':'minus'}">${t('заработок {0}',sign(rw-cost))}</div></div>`;
+        if(!cost) h+=`<div class="cs">${t('Себестоимость 0 — проверьте рецепт и цены продуктов в «Настройках».')}</div>`;
+      }
+      if(ks.length) h+=`<div style="margin-top:8px">${t('Спишется:')} ${ks.map(k=>`${esc(iName(k))} <b>${qf(use[k])}</b> ${iUnit(k)}`).join(' · ')}</div>`;
+      pv.hidden=!h; pv.innerHTML=h;
+    }}
   else if(S.type==='purchase'){let s=0,n=0;for(const id in S.buy){const b=S.buy[id];const v=(+b.qty||0)*(+b.price||0);s+=v;if(+b.qty>0)n++;const el=$('#bs-'+id);if(el)el.textContent=v?money(v):''}
     if(tot) tot.textContent=money(s)+(n?' · '+t('{0} поз.',n):''); if(go) go.disabled=!n}
 }
