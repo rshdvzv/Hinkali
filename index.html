@@ -161,6 +161,12 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 .cs{font-size:.8rem;color:var(--muted);text-align:right}
 .cs.plus{color:var(--good)} .cs.minus{color:var(--bad)}
 .hint{color:var(--accent);font-size:.76rem;font-weight:600;min-height:1em}
+.cashbtns{display:flex;gap:8px;margin-top:12px}
+.cashbtns button{flex:1;border:0;border-radius:8px;padding:11px 6px;font:700 .95rem var(--f-body);background:var(--bg);color:var(--ink);cursor:pointer}
+.qcash{margin-bottom:12px}
+.cnt{width:86px;padding:7px 8px;font-size:.95rem}
+.sub2{font-size:.72rem;color:var(--muted);font-weight:500}
+.calcbox{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
 .langbtn{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 .8rem var(--f-body);padding:6px 10px;border-radius:8px;cursor:pointer}
 </style>
 </head>
@@ -189,7 +195,7 @@ const $$ = s => [...document.querySelectorAll(s)];
 const view = $('#view');
 
 /* ---------- язык / dil ---------- */
-const APP_VER='6';
+const APP_VER='7';
 const LANG_KEY='khinkali.lang';
 let LANG='az';
 try{LANG=localStorage.getItem(LANG_KEY)||'az'}catch(_){}
@@ -227,7 +233,19 @@ const AZ={
 'Виды хинкали и цены':'Xinkal növləri və qiymətlər','Название':'Ad','Штучно, ₼':'Ədədlə, ₼','Опт, ₼/шт':'Topdan, ₼/əd.','Убрать':'Sil','+ Вид хинкали':'+ Xinkal növü',
 'Продукты и цены':'Ərzaq və qiymətlər','Цена обновляется сама после каждой закупки.':'Qiymət hər alışdan sonra özü yenilənir.','Ед.':'Vahid','Цена, ₼':'Qiymət, ₼','Раздел':'Bölmə','+ Продукт':'+ Ərzaq',
 'Рецептура на 100 штук':'100 ədəd üçün resept','Сколько продуктов уходит на 100 хинкали. Пустое поле — продукт не нужен.':'100 xinkala nə qədər ərzaq gedir. Boş xana — bu ərzaq lazım deyil.',
-'Сохранить настройки':'Ayarları yadda saxla','Версия':'Versiya',
+'Сохранить настройки':'Ayarları yadda saxla','Версия':'Versiya','Склад':'Anbar',
+'+ В кассу':'+ Kassaya','− Из кассы':'− Kassadan','Сохранить':'Yadda saxla','Заканчивается:':'Az qalıb:',
+'В программе':'Proqramda','По факту':'Faktiki','Заполнено позиций':'Doldurulub','Сохранить остатки':'Qalıqları yadda saxla','Сохранить пересчёт':'Sayımı yadda saxla',
+'NOTE_OPENING':'Anbarda artıq nə varsa yazın: hazır xinkal və ərzaq. Bu başlanğıc qalıqdır — kassa dəyişmir. Boş xanalara toxunulmur.',
+'NOTE_COUNT':'Sayım: anbarda real olaraq nə qədər olduğunu yazın. Proqram qalığı düzəldəcək, kəsiri və ya artığı göstərəcək. Yalnız saydığınızı doldurun.',
+'себест.':'maya','хватит на {0} шт':'{0} ədədə çatar','Норма и факт':'Norma və fakt','По норме':'Normaya görə','Факт':'Fakt','Разница':'Fərq',
+'1 шт по норме':'1 əd. normaya görə','1 шт по факту':'1 əd. faktiki','Недостача за период':'Dövr üzrə kəsir',
+'NOTE_NOCOUNT':'Faktı görmək üçün həftənin sonunda anbarı sayın.','NOTE_NORM_EMPTY':'Bu dövrdə hazırlama yoxdur.',
+'Ничего не изменилось':'Heç nə dəyişmədi','Склад обновлён':'Anbar yeniləndi','Начальный остаток':'Başlanğıc qalıq','Пересчёт: было {0}, стало {1}':'Sayım: idi {0}, oldu {1}',
+'Техкарта':'Texnoloji kart','NOTE_TECH':'Reqlamentə görə 1 xinkal üçün norma. Çəki — 1 ədəd üçün qramla; dəstə və ədəd — 100 ədəd üçün.',
+'{0}, г на 1 шт':'{0}, q (1 ədəd)','{0}, мл на 1 шт':'{0}, ml (1 ədəd)','{0}, {1} на 100 шт':'{0}, {1} (100 ədəd)',
+'Калькулятор: сколько штук?':'Kalkulyator: neçə ədəd?','Нужно':'Lazımdır','На складе':'Anbarda','Стоит':'Qiyməti','{0} шт обойдутся':'{0} ədədin maya dəyəri',
+'Красным — не хватает на складе.':'Qırmızı — anbarda çatmır.','Предупреждать, когда продуктов хватает меньше чем на (шт)':'Ərzaq bu qədər ədədə çatmayanda xəbərdar et (ədəd)',
 'Рецепт — калькулятор':'Resept — kalkulyator','Сколько штук вышло из партии':'Partiyadan neçə ədəd çıxdı',
 'NOTE_RECIPE':'Bir partiyaya nə qədər ərzaq getdiyini yazın — necə var, elə. Məsələn: 10 kq ət, 9 kq un → 250 ədəd. Proqram özü 1 ədədə və 100 ədədə hesablayacaq.',
 '1 шт ≈ {0} г':'1 əd. ≈ {0} q','1 шт ≈ {0} мл':'1 əd. ≈ {0} ml','1 шт ≈ {0} {1}':'1 əd. ≈ {0} {1}',
@@ -271,6 +289,10 @@ const RU_FIX={'NOTE_RESULT':'«В плюсе / в минусе» — сколь�
 'NOTE_STOCK':'Красный минус значит, что слепили больше, чем записано в закупках — проверьте, всё ли купленное внесли. «Хватит на» — примерно, по самому «прожорливому» виду.',
 'NOTE_RESET':'Красная кнопка стирает все записи: кассу, заказы, закупки, лепку. Цены и рецепты остаются. Сначала сделайте резервную копию.',
 'NOTE_RECIPE':'Напишите, сколько продуктов ушло на одну партию — как есть. Например: 10 кг мяса, 9 кг муки → вышло 250 штук. Программа сама пересчитает на 1 штуку и на 100.',
+'NOTE_OPENING':'Впишите, что уже лежит на складе: готовые хинкали и продукты. Это начальный остаток — касса не меняется. Пустые поля не трогаются.',
+'NOTE_COUNT':'Пересчёт: впишите, сколько реально лежит. Программа поправит остаток и покажет недостачу или излишек. Заполняйте только то, что пересчитали.',
+'NOTE_NOCOUNT':'Чтобы увидеть факт, в конце недели сделайте пересчёт склада.','NOTE_NORM_EMPTY':'За этот период лепки не было.',
+'NOTE_TECH':'Норма на 1 хинкали по регламенту. Вес — в граммах на 1 штуку; пучки и штуки — на 100 штук.',
 'NOTE_BACKUP':'Все записи хранятся только в этом телефоне. Раз в неделю сохраняйте копию в «Файлы», Telegram или WhatsApp — если телефон потеряется или сломается, учёт можно будет восстановить на новом.',
 'RESTORE_Q':'В копии {1} записей от {0}. Текущие данные на телефоне ({2} записей) будут заменены.',
 'Выручка · {0}':'Выручка · {0} заказ{E}'};
@@ -335,15 +357,15 @@ function calc(){
   const pc={};
   for(const p of C.products){let c=0;const r=rec[p.id]||{};for(const k in r)c+=(+r[k]||0)/100*(avg[k]||0);pc[p.id]=c}
   const P={},I={};
-  const eP=id=>P[id]||(P[id]={made:0,ret:0,whs:0,waste:0,rev:0,stock:0});
-  const eI=id=>I[id]||(I[id]={bought:0,spent:0,used:0,wasted:0,stock:0});
+  const eP=id=>P[id]||(P[id]={made:0,ret:0,whs:0,waste:0,rev:0,stock:0,adj:0,touched:false});
+  const eI=id=>I[id]||(I[id]={bought:0,spent:0,used:0,wasted:0,stock:0,adj:0,touched:false});
   C.products.forEach(p=>eP(p.id)); C.ingredients.forEach(i=>eI(i.id));
   const T={orders:0,ordersR:0,ordersW:0,rev:0,revR:0,revW:0,sold:0,soldR:0,soldW:0,made:0,waste:0,
-    buy:0,exp:0,expCat:{},cogs:0,wasteCost:0,cashNow:0,debt:0,debts:[]};
+    buy:0,exp:0,expCat:{},cogs:0,wasteCost:0,cashNow:0,debt:0,debts:[],ingShort:0,prodShort:0,counts:0};
   for(const o of S.ops){
     const p=inP(o.date), q=+o.qty||0;
-    if(o.type==='purchase'){const x=eI(o.item);x.stock+=q;T.cashNow-=+o.amount||0;if(p){x.bought+=q;x.spent+=+o.amount||0;T.buy+=+o.amount||0}}
-    else if(o.type==='production'){const x=eP(o.item);x.stock+=q;const r=rec[o.item]||{};
+    if(o.type==='purchase'){const x=eI(o.item);x.touched=true;x.stock+=q;T.cashNow-=+o.amount||0;if(p){x.bought+=q;x.spent+=+o.amount||0;T.buy+=+o.amount||0}}
+    else if(o.type==='production'){const x=eP(o.item);x.touched=true;x.stock+=q;const r=rec[o.item]||{};
       for(const k in r){const u=(+r[k]||0)/100*q;const y=eI(k);y.stock-=u;if(p)y.used+=u}
       if(p){x.made+=q;T.made+=q}}
     else if(isOrder(o)){
@@ -357,14 +379,26 @@ function calc(){
     else if(o.type==='waste'){
       if(o.kind==='ingredient'){const y=eI(o.item);y.stock-=q;if(p){y.wasted+=q;T.wasteCost+=q*(avg[o.item]||0)}}
       else{const x=eP(o.item);x.stock-=q;if(p){x.waste+=q;T.waste+=q;T.wasteCost+=q*(pc[o.item]||0)}}}
+    else if(o.type==='adjust'){const d=+o.delta||0;
+      if(o.kind==='ingredient'){const y=eI(o.item);y.stock+=d;y.touched=true;if(p&&o.reason==='count'){y.adj+=d;T.counts++;T.ingShort-=d*(avg[o.item]||0)}}
+      else{const x=eP(o.item);x.stock+=d;x.touched=true;if(p&&o.reason==='count'){x.adj+=d;T.counts++;T.prodShort-=d*(pc[o.item]||0)}}}
     else if(o.type==='expense'){T.cashNow-=+o.amount||0;if(p){T.exp+=+o.amount||0;T.expCat[o.category]=(T.expCat[o.category]||0)+(+o.amount||0)}}
     else if(o.type==='cash'){const v=+o.amount||0;T.cashNow+=o.dir==='out'?-v:v}
   }
+  let normCost=0; for(const i of C.ingredients) normCost+=(I[i.id].used||0)*(avg[i.id]||0);
+  T.normPiece=T.made?normCost/T.made:0; T.factPiece=T.made?(normCost+T.ingShort)/T.made:0;
   T.result=T.rev-T.buy-T.exp;
-  T.profitCost=T.rev-T.cogs-T.wasteCost-T.exp;
+  T.profitCost=T.rev-T.cogs-T.wasteCost-T.exp-T.ingShort-T.prodShort;
   return {P,I,T,pc,avg};
 }
-
+function lowList(I){
+  const rec=S.catalog.recipes||{}, lim=+(S.catalog.lowPcs??200), out=[];
+  if(!lim) return out;
+  for(const i of S.catalog.ingredients){let per=0;for(const pid in rec){const v=+rec[pid]?.[i.id]||0;if(v>per)per=v}
+    const x=I[i.id]; if(!per||!x||!x.touched) continue;
+    const pcs=Math.max(0,Math.floor(x.stock/per*100)); if(pcs<lim) out.push([i,pcs])}
+  return out;
+}
 /* ---------- render ---------- */
 function chrome(){
   document.documentElement.lang=LANG;
@@ -372,7 +406,7 @@ function chrome(){
   $('#appTitle').textContent=t('Цех хинкали');
   $('#langBtn').textContent=LANG==='az'?'RU':'AZ';
   $('#langBtn').setAttribute('aria-label',LANG==='az'?'Русский язык':'Azərbaycan dili');
-  const names={home:'Касса',add:'+ Записать',stock:'Остатки',log:'Журнал',cat:'Настройки'};
+  const names={home:'Касса',add:'+ Записать',stock:'Склад',log:'Журнал',cat:'Настройки'};
   $$('nav.tabs button').forEach(b=>{b.textContent=t(names[b.dataset.tab]);b.setAttribute('aria-selected',b.dataset.tab===S.tab)});
   $('#status').textContent=storageOk?t('Данные хранятся в этом телефоне'):t('Память недоступна — откройте в Safari');
 }
@@ -391,11 +425,11 @@ function periodChips(){
 }
 
 function vHome(){
-  const {P,T}=calc();
+  const {P,I,T}=calc();
   let h='';
   if(!S.ops.length) h+=`<div class="alert">${t('ONBOARD')}</div>`;
   h+=`<div class="cash"><span class="l">${t('В кассе сейчас')}</span><span class="v">${money(T.cashNow)}</span>
-    <span class="d">${T.debt?t('Клиенты должны ещё {0}',money(T.debt)):t('Долгов клиентов нет')}</span></div>
+    <span class="d">${T.debt?t('Клиенты должны ещё {0}',money(T.debt)):t('Долгов клиентов нет')}</span><div class="cashbtns"><button type="button" data-quick="in">${t('+ В кассу')}</button><button type="button" data-quick="out">${t('− Из кассы')}</button></div></div>${quickForm()}${lowAlert(I)}
   <div class="quick">
     <button class="main" data-go="order">${t('+ Заказ')}</button>
     <button data-go="production">${t('Лепка')}</button>
@@ -434,6 +468,19 @@ function vHome(){
     for(const o of T.debts.sort((x,y)=>x.date<y.date?-1:1)) h+=`<div class="debt"><div><b>${esc(o.client||t('Клиент без имени'))}</b><small>${dLabel(o.date)} · ${orderLines(o).map(l=>nf(l.qty)+' '+t('шт')).join(', ')}</small></div><div style="display:flex;gap:8px;align-items:center"><b style="font-family:var(--f-num)">${money(o.amount)}</b><button class="btn sm" data-paid="${o.id}">${t('Оплатили')}</button></div></div>`;
   }
   return h;
+}
+
+function quickForm(){
+  if(!S.quick) return '';
+  const out=S.quick==='out';
+  return `<form id="quickForm" class="card form qcash"><b>${out?t('Забрать из кассы'):t('Положить в кассу')}</b>
+  <label class="f">${t('Сумма, ₼')}<input type="number" id="qAmt" step="any" min="0" inputmode="decimal" placeholder="0"></label>
+  <label class="f">${t('Комментарий')}<input type="text" id="qNote" placeholder="${out?t('Например: забрал себе'):t('Например: начальный остаток')}"></label>
+  <div class="backup" style="margin-top:0"><button class="btn" type="submit">${t('Сохранить')}</button><button class="btn ghost" type="button" data-quick="">${t('Отмена')}</button></div></form>`;
+}
+function lowAlert(I){
+  const l=lowList(I); if(!l.length) return '';
+  return `<div class="alert bad">${t('Заканчивается:')} ${l.map(([i,n])=>`<b>${esc(tn(i.name))}</b> (${t('~{0} шт',nf(n))})`).join(', ')}</div>`;
 }
 
 /* ----- add forms ----- */
@@ -532,19 +579,36 @@ function refreshTotals(){
 
 /* ----- stock ----- */
 function vStock(){
-  const {P,I,pc}=calc();
-  let h=`<h2>${t('Готовые хинкали')}</h2><div class="tbl"><table><thead><tr><th>${t('Вид')}</th><th>${t('Осталось')}</th><th>${t('Себест./шт')}</th><th>${t('Цена штучно')}</th></tr></thead><tbody>`;
-  for(const p of S.catalog.products){const x=P[p.id];h+=`<tr><td>${esc(tn(p.name))}</td><td class="n">${x.stock<0?`<span class="pill bad">${nf(x.stock)}</span>`:`<b>${nf(x.stock)}</b> ${t('шт')}`}</td><td class="n">${pc[p.id]?money(pc[p.id]):'—'}</td><td class="n">${money(p.retail)}</td></tr>`}
-  h+=`</tbody></table></div><p class="note">${t('Себестоимость — по рецептуре и средней цене, по которой вы покупали продукты.')}</p>`;
-  h+=`<h2>${t('Продукты на складе')}</h2><div class="tbl"><table><thead><tr><th>${t('Продукт')}</th><th>${t('Осталось')}</th><th>${t('Хватит на')}</th></tr></thead><tbody>`;
-  const rec=S.catalog.recipes||{};
+  const {P,I,T,pc,avg}=calc(); const rec=S.catalog.recipes||{};
+  const first=!S.ops.some(o=>o.type==='adjust');
+  let h=`<div class="alert">${t(first?'NOTE_OPENING':'NOTE_COUNT')}</div>${lowAlert(I)}<form id="countForm" class="form">`;
+  h+=`<h2>${t('Готовые хинкали')}</h2><div class="tbl"><table><thead><tr><th>${t('Вид')}</th><th>${t('В программе')}</th><th>${t('По факту')}</th></tr></thead><tbody>`;
+  for(const p of S.catalog.products){const x=P[p.id];
+    h+=`<tr><td>${esc(tn(p.name))}<div class="sub2">${pc[p.id]?t('себест.')+' '+money(pc[p.id]):''}</div></td><td class="n">${x.stock<0?`<span class="pill bad">${nf(x.stock)}</span>`:`<b>${nf(x.stock)}</b>`} ${t('шт')}</td><td><input class="cnt" type="number" step="1" min="0" inputmode="numeric" data-cnt="p:${p.id}" placeholder="—"></td></tr>`}
+  h+=`</tbody></table></div><h2>${t('Продукты')}</h2><div class="tbl"><table><thead><tr><th>${t('Продукт')}</th><th>${t('В программе')}</th><th>${t('По факту')}</th></tr></thead><tbody>`;
   for(const i of S.catalog.ingredients){const x=I[i.id];const u=t(i.unit);
     let per=0;for(const pid in rec){const v=+rec[pid]?.[i.id]||0;if(v>per)per=v}
     const pcs=per&&x.stock>0?Math.floor(x.stock/per*100):null;
-    if(!x.stock&&!per) continue;
-    const st=x.stock<-1e-9?`<span class="pill bad">${qf(x.stock)} ${u}</span>`:(x.stock<1e-9?`<span class="pill warn">${t('нет')}</span>`:`<b>${qf(x.stock)}</b> ${u}`);
-    h+=`<tr><td>${esc(tn(i.name))}</td><td class="n">${st}</td><td class="n">${pcs!=null?t('~{0} шт',nf(pcs)):'—'}</td></tr>`}
-  h+=`</tbody></table></div><p class="note">${t('NOTE_STOCK')}</p>`;
+    const st=x.stock<-1e-9?`<span class="pill bad">${qf(x.stock)}</span>`:`<b>${qf(x.stock)}</b>`;
+    h+=`<tr><td>${esc(tn(i.name))}<div class="sub2">${pcs!=null?t('хватит на {0} шт',nf(pcs)):''}</div></td><td class="n">${st} ${u}</td><td><input class="cnt" type="number" step="any" min="0" inputmode="decimal" data-cnt="i:${i.id}" placeholder="—"></td></tr>`}
+  h+=`</tbody></table></div>
+  <div class="bar"><div class="t">${t('Заполнено позиций')}<b id="cntN">0</b></div><button class="btn" type="submit" id="cntGo" disabled>${first?t('Сохранить остатки'):t('Сохранить пересчёт')}</button></div></form>`;
+  // норма и факт
+  h+=`<h2>${t('Норма и факт')}</h2>`+periodChips();
+  const rows=S.catalog.ingredients.filter(i=>I[i.id].used>1e-9||Math.abs(I[i.id].adj)>1e-9);
+  if(!rows.length) h+=`<div class="empty">${t('NOTE_NORM_EMPTY')}</div>`;
+  else{
+    h+=`<div class="tbl"><table><thead><tr><th>${t('Продукт')}</th><th>${t('По норме')}</th><th>${t('Факт')}</th><th>${t('Разница')}</th></tr></thead><tbody>`;
+    for(const i of rows){const x=I[i.id];const u=t(i.unit);const fact=x.used-x.adj;const diff=-x.adj;const over=diff>1e-9&&(x.used<=0||diff/x.used>0.05);
+      h+=`<tr><td>${esc(tn(i.name))}</td><td class="n">${qf(x.used)} ${u}</td><td class="n">${T.counts?qf(fact)+' '+u:'—'}</td><td class="n">${!T.counts?'—':over?`<span class="pill bad">+${qf(diff)} ${u} · ${money(diff*(avg[i.id]||0))}</span>`:diff<-1e-9?`<span class="pill ok">${qf(diff)} ${u}</span>`:'0'}</td></tr>`}
+    h+=`</tbody></table></div>`;
+    const bad=T.counts&&T.factPiece>T.normPiece*1.05;
+    h+=`<div class="result" style="margin-top:10px">
+      <div class="ln"><span>${t('1 шт по норме')}</span><span>${money(T.normPiece)}</span></div>
+      <div class="ln"><span>${t('1 шт по факту')}</span><span class="${bad?'minus':''}">${T.counts?money(T.factPiece):'—'}</span></div>
+      <div class="ln tot"><span>${t('Недостача за период')}</span><span class="${T.ingShort+T.prodShort>0.005?'minus':''}">${T.counts?money(Math.max(0,T.ingShort+T.prodShort)):'—'}</span></div></div>`;
+    if(!T.counts) h+=`<p class="note">${t('NOTE_NOCOUNT')}</p>`;
+  }
   return h;
 }
 
@@ -552,7 +616,7 @@ function vStock(){
 function vLog(){
   if(!S.ops.length) return `<div class="empty">${t('Записей пока нет. Нажмите «+ Записать».')}</div>`;
   const by={}; for(const o of S.ops)(by[o.date]=by[o.date]||[]).push(o);
-  const L={order:'Заказ',sale:'Заказ',production:'Лепка',purchase:'Закупка',expense:'Расход',waste:'Мусор',cash:'Касса'};
+  const L={order:'Заказ',sale:'Заказ',production:'Лепка',purchase:'Закупка',expense:'Расход',waste:'Мусор',cash:'Касса',adjust:'Склад'};
   let h='';
   for(const d of Object.keys(by).sort().reverse()){
     const day=by[d]; const rev=day.filter(isOrder).reduce((s,o)=>s+(+o.amount||0),0);
@@ -565,6 +629,8 @@ function vLog(){
       else if(o.type==='production'){name=pName(o.item);right=nf(o.qty)+' '+t('шт')}
       else if(o.type==='expense'){name=t(o.category);sub=esc(o.note||'');right='−'+money(o.amount)}
       else if(o.type==='waste'){name=o.kind==='ingredient'?iName(o.item):pName(o.item);sub=esc(t(o.reason||''));right=qf(o.qty)+' '+(o.kind==='ingredient'?iUnit(o.item):t('шт'))}
+      else if(o.type==='adjust'){const ing=o.kind==='ingredient';name=ing?iName(o.item):pName(o.item);const u=ing?iUnit(o.item):t('шт');
+        sub=o.reason==='opening'?t('Начальный остаток'):t('Пересчёт: было {0}, стало {1}',qf((+o.counted||0)-(+o.delta||0))+' '+u,qf(o.counted)+' '+u);right=(o.delta>0?'+':'')+qf(o.delta)+' '+u}
       else if(o.type==='cash'){name=o.dir==='out'?t('Забрали из кассы'):t('Положили в кассу');sub=esc(o.note||'');right=(o.dir==='out'?'−':'+')+money(o.amount)}
       const sure=S.confirmDel===o.id;
       h+=`<div class="op"><span class="t ${o.type==='sale'?'order':o.type}">${t(L[o.type]||o.type)}</span><div class="main"><div>${esc(name)}</div><div>${sub}</div></div><div class="r"><span>${right}</span><button class="x ${sure?'sure':''}" data-del="${o.id}">${sure?t('Точно удалить?'):t('удалить')}</button></div></div>`;
@@ -585,14 +651,15 @@ function vCat(){
   for(const i of C.ingredients) h+=`<div class="cat-row ing" data-iid="${i.id}"><label class="f">${t('Название')}<input data-k="name" data-orig="${esc(i.name)}" value="${esc(tn(i.name))}"></label><label class="f">${t('Ед.')}<select data-k="unit">${UNITS.map(u=>`<option value="${u}" ${u===i.unit?'selected':''}>${t(u)}</option>`).join('')}</select></label><label class="f">${t('Цена, ₼')}<input type="number" step="any" data-k="price" value="${i.price??''}"></label><label class="f">${t('Раздел')}<select data-k="group">${GROUPS.map(g=>`<option value="${g}" ${g===(i.group||'Прочее')?'selected':''}>${t(g)}</option>`).join('')}</select></label><button class="btn ghost sm" data-rmi="${i.id}" type="button">${t('Убрать')}</button></div>`;
   h+=`<p style="margin:10px 0 0"><button class="btn ghost" data-act="addI" type="button">${t('+ Продукт')}</button></p></div>`;
   const sel=S.recProd&&prod(S.recProd)?S.recProd:C.products[0]?.id;
-  const B=S.recBatch||100;
-  h+=`<div class="card"><h2>${t('Рецепт — калькулятор')}</h2><p class="note" style="margin-top:-4px">${t('NOTE_RECIPE')}</p>`;
-  if(sel){h+=`<div class="row" style="margin-top:10px"><label class="f">${t('Вид')}<select id="recSel">${C.products.map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(tn(p.name))}</option>`).join('')}</select></label>
-    <label class="f">${t('Сколько штук вышло из партии')}<input type="number" id="recBatch" min="1" step="1" inputmode="numeric" value="${B}"></label></div><div class="rec">`;
+  h+=`<div class="card"><h2>${t('Техкарта')}</h2><p class="note" style="margin-top:-4px">${t('NOTE_TECH')}</p>`;
+  if(sel){h+=`<label class="f" style="margin-top:10px">${t('Вид')}<select id="recSel">${C.products.map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(tn(p.name))}</option>`).join('')}</select></label><div class="rec">`;
     const r=C.recipes?.[sel]||{};
-    for(const i of C.ingredients){if(i.group==='Упаковка')continue;const v=r[i.id]?+(r[i.id]*B/100).toFixed(4):'';
-      h+=`<label class="f">${esc(tn(i.name))}, ${t(i.unit)}<input type="number" step="any" min="0" inputmode="decimal" data-rec="${i.id}" data-unit="${i.unit}" value="${v}" placeholder="—"><small class="hint" id="rh-${i.id}"></small></label>`}
-    h+=`</div><div class="preview" id="recCost" style="margin-top:12px"></div>`}
+    for(const i of C.ingredients){if(i.group==='Упаковка')continue;
+      const w=i.unit==='кг'||i.unit==='л'; const v=r[i.id]?(w?+(r[i.id]*10).toFixed(2):+(+r[i.id]).toFixed(3)):'';
+      const lab=w?t(i.unit==='кг'?'{0}, г на 1 шт':'{0}, мл на 1 шт',esc(tn(i.name))):t('{0}, {1} на 100 шт',esc(tn(i.name)),t(i.unit));
+      h+=`<label class="f">${lab}<input type="number" step="any" min="0" inputmode="decimal" data-rec="${i.id}" data-w="${w?1:0}" value="${v}" placeholder="—"></label>`}
+    h+=`</div><div class="calcbox"><label class="f">${t('Калькулятор: сколько штук?')}<input type="number" id="calcN" min="1" step="1" inputmode="numeric" value="${S.calcN||1000}"></label><div id="recCost"></div></div>`}
+  h+=`<label class="f" style="margin-top:14px">${t('Предупреждать, когда продуктов хватает меньше чем на (шт)')}<input type="number" id="lowPcs" min="0" step="50" inputmode="numeric" value="${C.lowPcs??200}"></label>`;
   h+=`</div><button class="btn" data-act="saveCat" type="button">${t('Сохранить настройки')}</button>`;
   const days=S.lastBackup?Math.round((new Date(today())-new Date(S.lastBackup))/864e5):null;
   h+=`<div class="card"><h2>${t('Резервная копия')}</h2><p class="note" style="margin-top:-4px">${t('NOTE_BACKUP')} ${S.lastBackup?(days===0?t('Последняя копия: сегодня.'):t('Последняя копия: {0} дн. назад.',days)):`<b>${t('Копию ещё не делали.')}</b>`}</p>
@@ -615,18 +682,21 @@ function perPiece(v,unit){
 }
 function refreshRecipe(){
   const box=$('#recCost'); if(!box) return;
-  const B=S.recBatch||100; const {avg}=calc(); let cost=0, miss=false;
-  $$('[data-rec]').forEach(x=>{const v=+x.value||0;const per=B?v/B:0;const h=$('#rh-'+x.dataset.rec);if(h)h.textContent=v&&B?perPiece(per,x.dataset.unit):'';
-    if(v){const pr=avg[x.dataset.rec]||0;if(!pr)miss=true;cost+=v*pr}});
-  if(!B){box.innerHTML='';box.hidden=true;return}
-  const p=prod($('#recSel')?.value);
-  let h=`<div class="calc"><div class="cl"><span>${t('Партия {0} шт обойдётся',nf(B))}</span><b>${money(cost)}</b></div>
-  <div class="cl"><span>${t('1 штука')}</span><b>${money(cost/B)}</b></div><div class="cl"><span>${t('100 штук')}</span><b>${money(cost/B*100)}</b></div>`;
-  if(p){const m=(+p.retail||0)-cost/B, mw=(+p.wholesale||0)-cost/B;
-    h+=`<div class="cs ${m>=0?'plus':'minus'}">${t('с одной штуки: штучно {0}, оптом {1}',sign(m),sign(mw))}</div>`}
-  h+=`</div>`;
-  if(miss) h+=`<div class="cs" style="text-align:left;margin-top:6px">${t('У некоторых продуктов нет цены — впишите её выше, иначе расчёт неполный.')}</div>`;
-  box.hidden=false; box.innerHTML=h;
+  const N=Math.max(0,Math.round(+($('#calcN')?.value)||0)); if(N) S.calcN=N;
+  const {avg,I}=calc(); let cost=0,miss=false,short=false,rows='';
+  $$('[data-rec]').forEach(x=>{const v=+x.value||0;if(!v)return;const id=x.dataset.rec;const per100=x.dataset.w==='1'?v/10:v;const need=per100*N/100;const pr=avg[id]||0;if(!pr)miss=true;cost+=need*pr;
+    const have=I[id]?.stock||0;const sh=need>have+1e-9;if(sh)short=true;
+    rows+=`<tr><td>${esc(iName(id))}</td><td class="n"><b>${qf(need)}</b> ${iUnit(id)}</td><td class="n">${sh?`<span class="pill bad">${qf(have)}</span>`:qf(have)}</td><td class="n">${money(need*pr)}</td></tr>`});
+  if(!rows||!N){box.innerHTML='';return}
+  const p=prod($('#recSel')?.value); const one=cost/N;
+  let h=`<div class="tbl" style="margin-top:8px"><table><thead><tr><th>${t('Продукт')}</th><th>${t('Нужно')}</th><th>${t('На складе')}</th><th>${t('Стоит')}</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  if(short) h+=`<p class="note">${t('Красным — не хватает на складе.')}</p>`;
+  h+=`<div class="preview" style="margin-top:10px"><div class="calc"><div class="cl"><span>${t('{0} шт обойдутся',nf(N))}</span><b>${money(cost)}</b></div><div class="cl"><span>${t('1 штука')}</span><b>${money(one)}</b></div>`;
+  if(p){h+=`<div class="cl"><span>${t('Продадите штучно')}</span><b>${money(N*(+p.retail||0))}</b></div><div class="cs ${p.retail-one>=0?'plus':'minus'}">${t('заработок {0}',sign(N*((+p.retail||0)-one)))}</div>
+    <div class="cl"><span>${t('Продадите оптом')}</span><b>${money(N*(+p.wholesale||0))}</b></div><div class="cs ${p.wholesale-one>=0?'plus':'minus'}">${t('заработок {0}',sign(N*((+p.wholesale||0)-one)))}</div>`}
+  h+=`</div></div>`;
+  if(miss) h+=`<p class="note">${t('У некоторых продуктов нет цены — впишите её выше, иначе расчёт неполный.')}</p>`;
+  box.innerHTML=h;
 }
 // Имя из поля: если пользователь не менял переведённое стандартное название — храним исходное.
 const nameFrom=inp=>{const v=inp.value.trim();const o=inp.dataset.orig;if(o&&v===tn(o))return o;return v||'Без названия'};
@@ -637,7 +707,8 @@ function readCatDom(){
   $$('[data-iid]').forEach(r=>{const i=C.ingredients.find(x=>x.id===r.dataset.iid);if(!i)return;
     i.name=nameFrom(r.querySelector('[data-k=name]'));i.unit=r.querySelector('[data-k=unit]').value;i.group=r.querySelector('[data-k=group]').value;const pr=r.querySelector('[data-k=price]').value;i.price=pr===''?null:+pr});
   const sel=$('#recSel')?.value;
-  if(sel){const B=S.recBatch||100;const r={};$$('[data-rec]').forEach(x=>{const v=+x.value;if(v)r[x.dataset.rec]=+(v*100/B).toFixed(5)});C.recipes=C.recipes||{};C.recipes[sel]=r}
+  if(sel){const r={};$$('[data-rec]').forEach(x=>{const v=+x.value;if(v)r[x.dataset.rec]=x.dataset.w==='1'?+(v/10).toFixed(5):v});C.recipes=C.recipes||{};C.recipes[sel]=r}
+  const lp=$('#lowPcs');if(lp)C.lowPcs=Math.max(0,+lp.value||0);
   return C;
 }
 
@@ -689,6 +760,7 @@ view.addEventListener('click',e=>{
   if(hd){const id=hd.dataset.buyon;if(S.buy[id])delete S.buy[id];else S.buy[id]={qty:'',price:ing(id)?.price??''};render();setTimeout(()=>$(`[data-bqty="${id}"]`)?.focus(),0);return}
   const b=e.target.closest('button');if(!b)return;
   const d=b.dataset;
+  if('quick' in d){S.quick=d.quick||null;render();if(S.quick)setTimeout(()=>$('#qAmt')?.focus(),0);return}
   if(d.lang){S.catalog=readCatDom();return setLang(d.lang)}
   if(d.period){S.period=d.period;return render()}
   if(d.go){S.type=d.go;S.tab='add';render();window.scrollTo(0,0);return}
@@ -725,7 +797,8 @@ view.addEventListener('input',e=>{
   if(d.mqty){S.make[d.mqty]=e.target.value;return refreshTotals()}
   if(d.bqty){S.buy[d.bqty].qty=e.target.value;return refreshTotals()}
   if(d.bprice){S.buy[d.bprice].price=e.target.value;return refreshTotals()}
-  if(d.rec) return refreshRecipe();
+  if(d.rec||e.target.id==='calcN') return refreshRecipe();
+  if(d.cnt){const n=$$('[data-cnt]').filter(x=>x.value!=='').length;$('#cntN').textContent=n;$('#cntGo').disabled=!n;return}
   if(e.target.id==='fClient') S.client=e.target.value;
 });
 view.addEventListener('change',e=>{
@@ -739,6 +812,19 @@ view.addEventListener('change',e=>{
 
 view.addEventListener('submit',e=>{
   e.preventDefault(); if(S.busy) return;
+  if(e.target.id==='quickForm'){
+    const amt=+$('#qAmt').value;if(!(amt>0))return toast(t('Укажите сумму'));
+    addOps([{type:'cash',date:today(),dir:S.quick,amount:r2(amt),note:$('#qNote').value.trim()}]);
+    toast(S.quick==='out'?t('Деньги забраны из кассы'):t('Деньги в кассе'));S.quick=null;return render();
+  }
+  if(e.target.id==='countForm'){
+    const {P,I}=calc(); const list=[];
+    $$('[data-cnt]').forEach(x=>{if(x.value==='')return;const [k,id]=x.dataset.cnt.split(':');const actual=+x.value;if(!(actual>=0))return;
+      const cur=k==='p'?P[id]:I[id]; if(!cur) return; const delta=+(actual-cur.stock).toFixed(4); if(Math.abs(delta)<1e-9) return;
+      list.push({type:'adjust',date:today(),kind:k==='p'?'product':'ingredient',item:id,delta,counted:actual,reason:cur.touched?'count':'opening'})});
+    if(!list.length){toast(t('Ничего не изменилось'));return render()}
+    addOps(list);toast(t('Склад обновлён'));return render();
+  }
   const date=$('#fDate').value||today(); S.date=date===today()?'':date;
   let list=[], msg='';
   if(S.type==='order'){
