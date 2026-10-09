@@ -160,6 +160,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 .calc .cl b{font-family:var(--f-num)}
 .cs{font-size:.8rem;color:var(--muted);text-align:right}
 .cs.plus{color:var(--good)} .cs.minus{color:var(--bad)}
+.hint{color:var(--accent);font-size:.76rem;font-weight:600;min-height:1em}
 .langbtn{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 .8rem var(--f-body);padding:6px 10px;border-radius:8px;cursor:pointer}
 </style>
 </head>
@@ -226,6 +227,12 @@ const AZ={
 'Продукты и цены':'Ərzaq və qiymətlər','Цена обновляется сама после каждой закупки.':'Qiymət hər alışdan sonra özü yenilənir.','Ед.':'Vahid','Цена, ₼':'Qiymət, ₼','Раздел':'Bölmə','+ Продукт':'+ Ərzaq',
 'Рецептура на 100 штук':'100 ədəd üçün resept','Сколько продуктов уходит на 100 хинкали. Пустое поле — продукт не нужен.':'100 xinkala nə qədər ərzaq gedir. Boş xana — bu ərzaq lazım deyil.',
 'Сохранить настройки':'Ayarları yadda saxla',
+'Рецепт — калькулятор':'Resept — kalkulyator','Сколько штук вышло из партии':'Partiyadan neçə ədəd çıxdı',
+'NOTE_RECIPE':'Bir partiyaya nə qədər ərzaq getdiyini yazın — necə var, elə. Məsələn: 10 kq ət, 9 kq un → 250 ədəd. Proqram özü 1 ədədə və 100 ədədə hesablayacaq.',
+'1 шт ≈ {0} г':'1 əd. ≈ {0} q','1 шт ≈ {0} мл':'1 əd. ≈ {0} ml','1 шт ≈ {0} {1}':'1 əd. ≈ {0} {1}',
+'Партия {0} шт обойдётся':'{0} ədədlik partiya','1 штука':'1 ədəd','100 штук':'100 ədəd',
+'с одной штуки: штучно {0}, оптом {1}':'1 ədəddən qazanc: ədədlə {0}, topdan {1}',
+'У некоторых продуктов нет цены — впишите её выше, иначе расчёт неполный.':'Bəzi ərzaqların qiyməti yoxdur — yuxarıda yazın, yoxsa hesab natamam olacaq.',
 'Программа':'Proqram','Обновить программу':'Proqramı yenilə',
 'NOTE_RESET':'Qırmızı düymə bütün qeydləri silir: kassa, sifarişlər, alışlar, hazırlama. Qiymətlər və reseptlər qalır. Əvvəlcə ehtiyat nüsxə çıxarın.',
 'Удалить все записи':'Bütün qeydləri sil','Точно стереть все записи? ({0} шт.)':'Bütün qeydlər silinsin? ({0} ədəd)','Да, стереть':'Bəli, sil',
@@ -262,6 +269,7 @@ const RU_FIX={'NOTE_RESULT':'«В плюсе / в минусе» — сколь�
 'NOTE_CASH':'Здесь — только движение денег без продажи и покупки: стартовая сумма, вложили свои, забрали себе.',
 'NOTE_STOCK':'Красный минус значит, что слепили больше, чем записано в закупках — проверьте, всё ли купленное внесли. «Хватит на» — примерно, по самому «прожорливому» виду.',
 'NOTE_RESET':'Красная кнопка стирает все записи: кассу, заказы, закупки, лепку. Цены и рецепты остаются. Сначала сделайте резервную копию.',
+'NOTE_RECIPE':'Напишите, сколько продуктов ушло на одну партию — как есть. Например: 10 кг мяса, 9 кг муки → вышло 250 штук. Программа сама пересчитает на 1 штуку и на 100.',
 'NOTE_BACKUP':'Все записи хранятся только в этом телефоне. Раз в неделю сохраняйте копию в «Файлы», Telegram или WhatsApp — если телефон потеряется или сломается, учёт можно будет восстановить на новом.',
 'RESTORE_Q':'В копии {1} записей от {0}. Текущие данные на телефоне ({2} записей) будут заменены.',
 'Выручка · {0}':'Выручка · {0} заказ{E}'};
@@ -371,6 +379,7 @@ function render(){
   chrome();
   view.innerHTML = ({home:vHome,add:vAdd,stock:vStock,log:vLog,cat:vCat})[S.tab]();
   if(S.tab==='add') refreshTotals();
+  if(S.tab==='cat') refreshRecipe();
 }
 
 function periodChips(){
@@ -575,11 +584,14 @@ function vCat(){
   for(const i of C.ingredients) h+=`<div class="cat-row ing" data-iid="${i.id}"><label class="f">${t('Название')}<input data-k="name" data-orig="${esc(i.name)}" value="${esc(tn(i.name))}"></label><label class="f">${t('Ед.')}<select data-k="unit">${UNITS.map(u=>`<option value="${u}" ${u===i.unit?'selected':''}>${t(u)}</option>`).join('')}</select></label><label class="f">${t('Цена, ₼')}<input type="number" step="any" data-k="price" value="${i.price??''}"></label><label class="f">${t('Раздел')}<select data-k="group">${GROUPS.map(g=>`<option value="${g}" ${g===(i.group||'Прочее')?'selected':''}>${t(g)}</option>`).join('')}</select></label><button class="btn ghost sm" data-rmi="${i.id}" type="button">${t('Убрать')}</button></div>`;
   h+=`<p style="margin:10px 0 0"><button class="btn ghost" data-act="addI" type="button">${t('+ Продукт')}</button></p></div>`;
   const sel=S.recProd&&prod(S.recProd)?S.recProd:C.products[0]?.id;
-  h+=`<div class="card"><h2>${t('Рецептура на 100 штук')}</h2><p class="note" style="margin-top:-4px">${t('Сколько продуктов уходит на 100 хинкали. Пустое поле — продукт не нужен.')}</p>`;
-  if(sel){h+=`<label class="f" style="margin-top:10px">${t('Вид')}<select id="recSel">${C.products.map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(tn(p.name))}</option>`).join('')}</select></label><div class="rec">`;
+  const B=S.recBatch||100;
+  h+=`<div class="card"><h2>${t('Рецепт — калькулятор')}</h2><p class="note" style="margin-top:-4px">${t('NOTE_RECIPE')}</p>`;
+  if(sel){h+=`<div class="row" style="margin-top:10px"><label class="f">${t('Вид')}<select id="recSel">${C.products.map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(tn(p.name))}</option>`).join('')}</select></label>
+    <label class="f">${t('Сколько штук вышло из партии')}<input type="number" id="recBatch" min="1" step="1" inputmode="numeric" value="${B}"></label></div><div class="rec">`;
     const r=C.recipes?.[sel]||{};
-    for(const i of C.ingredients){if(i.group==='Упаковка')continue;h+=`<label class="f">${esc(tn(i.name))}, ${t(i.unit)}<input type="number" step="any" min="0" data-rec="${i.id}" value="${r[i.id]??''}" placeholder="—"></label>`}
-    h+=`</div>`}
+    for(const i of C.ingredients){if(i.group==='Упаковка')continue;const v=r[i.id]?+(r[i.id]*B/100).toFixed(4):'';
+      h+=`<label class="f">${esc(tn(i.name))}, ${t(i.unit)}<input type="number" step="any" min="0" inputmode="decimal" data-rec="${i.id}" data-unit="${i.unit}" value="${v}" placeholder="—"><small class="hint" id="rh-${i.id}"></small></label>`}
+    h+=`</div><div class="preview" id="recCost" style="margin-top:12px"></div>`}
   h+=`</div><button class="btn" data-act="saveCat" type="button">${t('Сохранить настройки')}</button>`;
   const days=S.lastBackup?Math.round((new Date(today())-new Date(S.lastBackup))/864e5):null;
   h+=`<div class="card"><h2>${t('Резервная копия')}</h2><p class="note" style="margin-top:-4px">${t('NOTE_BACKUP')} ${S.lastBackup?(days===0?t('Последняя копия: сегодня.'):t('Последняя копия: {0} дн. назад.',days)):`<b>${t('Копию ещё не делали.')}</b>`}</p>
@@ -594,6 +606,27 @@ function vCat(){
   h+=`</div></div></div>`;
   return h;
 }
+function perPiece(v,unit){
+  if(!v) return '';
+  if(unit==='кг'){const g=v*1000;return t('1 шт ≈ {0} г',g<10?nf(g,1):nf(g))}
+  if(unit==='л'){const m=v*1000;return t('1 шт ≈ {0} мл',m<10?nf(m,1):nf(m))}
+  return t('1 шт ≈ {0} {1}',nf(v,3),t(unit));
+}
+function refreshRecipe(){
+  const box=$('#recCost'); if(!box) return;
+  const B=S.recBatch||100; const {avg}=calc(); let cost=0, miss=false;
+  $$('[data-rec]').forEach(x=>{const v=+x.value||0;const per=B?v/B:0;const h=$('#rh-'+x.dataset.rec);if(h)h.textContent=v&&B?perPiece(per,x.dataset.unit):'';
+    if(v){const pr=avg[x.dataset.rec]||0;if(!pr)miss=true;cost+=v*pr}});
+  if(!B){box.innerHTML='';box.hidden=true;return}
+  const p=prod($('#recSel')?.value);
+  let h=`<div class="calc"><div class="cl"><span>${t('Партия {0} шт обойдётся',nf(B))}</span><b>${money(cost)}</b></div>
+  <div class="cl"><span>${t('1 штука')}</span><b>${money(cost/B)}</b></div><div class="cl"><span>${t('100 штук')}</span><b>${money(cost/B*100)}</b></div>`;
+  if(p){const m=(+p.retail||0)-cost/B, mw=(+p.wholesale||0)-cost/B;
+    h+=`<div class="cs ${m>=0?'plus':'minus'}">${t('с одной штуки: штучно {0}, оптом {1}',sign(m),sign(mw))}</div>`}
+  h+=`</div>`;
+  if(miss) h+=`<div class="cs" style="text-align:left;margin-top:6px">${t('У некоторых продуктов нет цены — впишите её выше, иначе расчёт неполный.')}</div>`;
+  box.hidden=false; box.innerHTML=h;
+}
 // Имя из поля: если пользователь не менял переведённое стандартное название — храним исходное.
 const nameFrom=inp=>{const v=inp.value.trim();const o=inp.dataset.orig;if(o&&v===tn(o))return o;return v||'Без названия'};
 function readCatDom(){
@@ -603,7 +636,7 @@ function readCatDom(){
   $$('[data-iid]').forEach(r=>{const i=C.ingredients.find(x=>x.id===r.dataset.iid);if(!i)return;
     i.name=nameFrom(r.querySelector('[data-k=name]'));i.unit=r.querySelector('[data-k=unit]').value;i.group=r.querySelector('[data-k=group]').value;const pr=r.querySelector('[data-k=price]').value;i.price=pr===''?null:+pr});
   const sel=$('#recSel')?.value;
-  if(sel){const r={};$$('[data-rec]').forEach(x=>{const v=+x.value;if(v)r[x.dataset.rec]=v});C.recipes=C.recipes||{};C.recipes[sel]=r}
+  if(sel){const B=S.recBatch||100;const r={};$$('[data-rec]').forEach(x=>{const v=+x.value;if(v)r[x.dataset.rec]=+(v*100/B).toFixed(5)});C.recipes=C.recipes||{};C.recipes[sel]=r}
   return C;
 }
 
@@ -691,10 +724,12 @@ view.addEventListener('input',e=>{
   if(d.mqty){S.make[d.mqty]=e.target.value;return refreshTotals()}
   if(d.bqty){S.buy[d.bqty].qty=e.target.value;return refreshTotals()}
   if(d.bprice){S.buy[d.bprice].price=e.target.value;return refreshTotals()}
+  if(d.rec) return refreshRecipe();
   if(e.target.id==='fClient') S.client=e.target.value;
 });
 view.addEventListener('change',e=>{
   if(e.target.id==='recSel'){S.catalog=readCatDom();S.recProd=e.target.value;return render()}
+  if(e.target.id==='recBatch'){const nb=Math.max(1,Math.round(+e.target.value||100));S.catalog=readCatDom();S.recBatch=nb;return render()}
   if(e.target.id==='pFrom'){S.from=e.target.value;return render()}
   if(e.target.id==='pTo'){S.to=e.target.value;return render()}
   if(e.target.id==='fDate') S.date=e.target.value;
