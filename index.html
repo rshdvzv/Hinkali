@@ -189,6 +189,7 @@ const $$ = s => [...document.querySelectorAll(s)];
 const view = $('#view');
 
 /* ---------- язык / dil ---------- */
+const APP_VER='6';
 const LANG_KEY='khinkali.lang';
 let LANG='az';
 try{LANG=localStorage.getItem(LANG_KEY)||'az'}catch(_){}
@@ -226,7 +227,7 @@ const AZ={
 'Виды хинкали и цены':'Xinkal növləri və qiymətlər','Название':'Ad','Штучно, ₼':'Ədədlə, ₼','Опт, ₼/шт':'Topdan, ₼/əd.','Убрать':'Sil','+ Вид хинкали':'+ Xinkal növü',
 'Продукты и цены':'Ərzaq və qiymətlər','Цена обновляется сама после каждой закупки.':'Qiymət hər alışdan sonra özü yenilənir.','Ед.':'Vahid','Цена, ₼':'Qiymət, ₼','Раздел':'Bölmə','+ Продукт':'+ Ərzaq',
 'Рецептура на 100 штук':'100 ədəd üçün resept','Сколько продуктов уходит на 100 хинкали. Пустое поле — продукт не нужен.':'100 xinkala nə qədər ərzaq gedir. Boş xana — bu ərzaq lazım deyil.',
-'Сохранить настройки':'Ayarları yadda saxla',
+'Сохранить настройки':'Ayarları yadda saxla','Версия':'Versiya',
 'Рецепт — калькулятор':'Resept — kalkulyator','Сколько штук вышло из партии':'Partiyadan neçə ədəd çıxdı',
 'NOTE_RECIPE':'Bir partiyaya nə qədər ərzaq getdiyini yazın — necə var, elə. Məsələn: 10 kq ət, 9 kq un → 250 ədəd. Proqram özü 1 ədədə və 100 ədədə hesablayacaq.',
 '1 шт ≈ {0} г':'1 əd. ≈ {0} q','1 шт ≈ {0} мл':'1 əd. ≈ {0} ml','1 шт ≈ {0} {1}':'1 əd. ≈ {0} {1}',
@@ -603,7 +604,7 @@ function vCat(){
   if(S.confirmReset==='ops') h+=`<div class="alert bad" style="margin:0;width:100%">${t('Точно стереть все записи? ({0} шт.)',S.ops.length)} <button class="btn sm danger" data-act="resetOps" type="button">${t('Да, стереть')}</button> <button class="x" data-act="noReset" type="button">${t('Отмена')}</button></div>`;
   else if(S.confirmReset==='all') h+=`<div class="alert bad" style="margin:0;width:100%">${t('Точно сбросить всё? Программа станет как новая.')} <button class="btn sm danger" data-act="resetAll" type="button">${t('Да, сбросить')}</button> <button class="x" data-act="noReset" type="button">${t('Отмена')}</button></div>`;
   else h+=`<button class="btn danger" data-act="askResetOps" type="button">🗑 ${t('Удалить все записи')}</button><button class="x" data-act="askResetAll" type="button">${t('Сбросить всё, включая цены и рецепты')}</button>`;
-  h+=`</div></div></div>`;
+  h+=`</div></div><p class="note" style="text-align:center">${t('Версия')} ${APP_VER}</p></div>`;
   return h;
 }
 function perPiece(v,unit){
@@ -779,7 +780,7 @@ view.addEventListener('submit',e=>{
 load();
 render();
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(_){}
-if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{})}
 })();
 </script>
 
